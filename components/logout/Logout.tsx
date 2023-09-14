@@ -9,6 +9,8 @@ const Logout = () => {
   const handleLogout = () => {
     //check userInfo or Session
     deleteCookie("userInfo")
+    deleteCookie("access_token")
+    deleteCookie("refresh_token")
     signOut();
   };
 

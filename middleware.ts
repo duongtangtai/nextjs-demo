@@ -3,9 +3,10 @@ import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
     console.log("middleware.....")
-    const session = await getToken({req: request, secret: process.env.JWT_SECRET});//get session for google login
+    const session = await getToken({ req: request, secret: process.env.JWT_SECRET });//get session for google login
     if (!session && !request.cookies.get("userInfo")) {
         console.log("session is null")
+        request.cookies.delete(["access_token", "refresh_token"])
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)

@@ -19,7 +19,7 @@ const handleLogin = (userInfo: Pick<UserInfo, "email" | "password">): ResponseDT
                 errors: [],
                 hasErrors: false,
                 statusCode: 200,
-                timeStamp: new Date()
+                timeStamp: new Date().toISOString()
             };
         }
     }
@@ -28,7 +28,7 @@ const handleLogin = (userInfo: Pick<UserInfo, "email" | "password">): ResponseDT
         errors: [],
         hasErrors: false,
         statusCode: 401,
-        timeStamp: new Date()
+        timeStamp: new Date().toISOString()
     };
 }
 
@@ -43,7 +43,7 @@ const handleRegister = (newUserInfo: Pick<UserInfo, "email" | "password" | "user
             errors: [],
             hasErrors: false,
             statusCode: 200,
-            timeStamp: new Date()
+            timeStamp: new Date().toISOString()
         }
 
     }
@@ -52,7 +52,7 @@ const handleRegister = (newUserInfo: Pick<UserInfo, "email" | "password" | "user
         errors: [],
         hasErrors: false,
         statusCode: 400,
-        timeStamp: new Date()
+        timeStamp: new Date().toISOString()
     }
 }
 

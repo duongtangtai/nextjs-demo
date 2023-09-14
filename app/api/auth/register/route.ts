@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AuthRepo } from "@/BE/auth/AuthRepo";
+import { BE_AUTH_REGISTER } from "@/lib/utils";
+import { requestHandler } from "@/lib/Request.service";
 
-export async function POST(request: NextRequest){
-
-    const { email, password, username} = await request.json();
-    const registerResult: ResponseDTO = AuthRepo.register({email, password, username});
-    if (registerResult.statusCode == 200) {
-        return NextResponse.json({
-            isSuccessful: true,
-            userInfo: registerResult.content
-        } as RegisterResult)
-    } else {
-        return NextResponse.json({isSuccessful: false} as RegisterResult)
-    }
+export async function POST(request: NextRequest) {
+    console.log("Register")
+    const { email, password, username } = await request.json();
+    const responseDto : ResponseDTO = await requestHandler({
+        request,
+        path: BE_AUTH_REGISTER,
+        method: "POST",
+        payload: { email, password, username },
+    })
+    return NextResponse.json(responseDto)
 }

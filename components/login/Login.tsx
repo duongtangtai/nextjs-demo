@@ -4,7 +4,7 @@ import React, { useState, useEffect, FormEvent } from "react";
 import { API_AUTH_LOGIN } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { setCookie, getCookie } from "cookies-next";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession} from "next-auth/react";
 
 import {
   LoginContainer,
@@ -22,10 +22,12 @@ import { FcGoogle } from "react-icons/fc";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isRemembered, setIsRemembered] = useState(false); //to increase the maxAge duration of session => 30 days otherwise it will be expired soon
+  const [isRemembered, setIsRemembered] = useState(false);
   const [doesLoginFail, setDoesLoginFail] = useState(false);
+  const [errMsg, setErrMsg] = useState<string | undefined>("");
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session} = useSession();
+
 
   //check use session or userInfo
   useEffect(() => {
@@ -50,19 +52,39 @@ const Login = () => {
       }),
     });
 
-    const result: LoginResult = await res.json();
+    const {
+      isSuccessful,
+      error,
+      userInfo,
+      access_token,
+      refresh_token,
+    }: LoginResult = await res.json();
 
-    if (!result.isSuccessful) {
+    if (!isSuccessful) {
       setDoesLoginFail(true);
+      setErrMsg(error);
     } else {
-      setCookie("userInfo", JSON.stringify(result.userInfo), {
-        maxAge: isRemembered ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 3, //=> seconds. 30 days if isRemembered checkbox is ticked. Otherwise 3 days
-      });
+      //check remember
+      if (isRemembered) {
+        const maxAge = 60 * 60 * 24 * 30;
+        setCookie("userInfo", JSON.stringify(userInfo), { maxAge });
+        setCookie("access_token", access_token, { maxAge });
+        setCookie("refresh_token", refresh_token, { maxAge });
+      } else {
+        //delete when browser is closed
+        setCookie("userInfo", JSON.stringify(userInfo));
+        setCookie("access_token", access_token);
+        setCookie("refresh_token", refresh_token);
+      }
+
       router.push("/");
     }
   };
-
-  console.log("render login component")
+  const reloadSession = () => {
+    const event = new Event("visibilitychange");
+    document.dispatchEvent(event);
+  };
+  console.log("render login component");
 
   return (
     <LoginContainer>
@@ -105,9 +127,7 @@ const Login = () => {
           <Link href="#">Forgot Password?</Link>
         </LoginField>
         {doesLoginFail && (
-          <div style={{ color: "red", fontWeight: "bold" }}>
-            Incorrect Email or Password
-          </div>
+          <div style={{ color: "red", fontWeight: "bold" }}>{errMsg}</div>
         )}
         <Button $bgcolor="#0d6efd" $color="white" type="submit">
           Sign In

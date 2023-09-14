@@ -3,27 +3,30 @@
 import { useState, ChangeEvent, useCallback, useMemo, useRef } from "react";
 import {
   Navbar,
-  Sidebar,
+  Navbar2,
   Button,
   Searchbar,
   SearchField,
   Table,
 } from "@/components/index";
 import { API_USERS } from "@/lib/utils";
+import Sidebar from "@/components/sidebar/Sidebar";
 
 type SearchForm = {
-  id: string;
-  ofc_cd: string;
+  username: string;
+  email: string;
 };
 
 const initSearchForm: SearchForm = {
-  id: "",
-  ofc_cd: "",
+  username: "",
+  email: "",
 };
 
 export default function Home() {
   const [searchForm, setSearchForm] = useState<SearchForm>(initSearchForm);
   const [rows, setRows] = useState<UserInfo[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const rowHandlers = useMemo(() => {
     return {
       rows,
@@ -35,31 +38,19 @@ export default function Home() {
   const headerConfigs: TableHeaderConfig[] = useMemo(
     () => [
       {
-        id: "id",
-        displayName: "User ID",
-      },
-      {
         id: "username",
         displayName: "User Name",
       },
       {
-        id: "ofc_cd",
+        id: "email",
         displayName: "Office Code",
       },
       {
-        id: "cnt_cd",
-        displayName: "Country Code",
-      },
-      {
-        id: "upd_usr",
+        id: "updatedBy",
         displayName: "Update User",
       },
       {
-        id: "acc_sts",
-        displayName: "Active",
-      },
-      {
-        id: "upd_dt",
+        id: "updatedAt",
         displayName: "Update Date",
       },
     ],
@@ -68,13 +59,16 @@ export default function Home() {
 
   const handleRetrieve = useCallback(async () => {
     //call request
-    const res = await fetch(
-      `${API_USERS}?id=${searchForm.id}&ofc_cd=${searchForm.ofc_cd}`
+    const response = await fetch(
+      `${API_USERS}?username=${searchForm.username}&email=${searchForm.email}`
     );
-    const result: { isSuccessful: boolean; userInfo: UserInfo[] } =
-      await res.json();
-
-    setRows([...result.userInfo]);
+    const {content, hasErrors, errors} : ResponseDTO = await response.json();
+    if (hasErrors) {
+      alert("error happens: " + errors.toString())
+    } else {
+      const users = content as UserInfo[];
+      setRows([...users])
+    }
   }, [searchForm]);
 
   const handleCopy = useCallback(() => {
@@ -120,28 +114,35 @@ export default function Home() {
 
   return (
     <>
+      <Sidebar
+        isOpen={isSidebarOpen}
+        handleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
       <Navbar />
-      <Sidebar title={"User Management ( ADM_SYS_0003 ) "}>
+      <Navbar2
+        title={"User Management ( ADM_SYS_0003 ) "}
+        handleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
         <Button onClick={handleRetrieve}>Retrieve</Button>
         <Button onClick={handleCopy}>Copy</Button>
         <Button onClick={handleSave}>Save</Button>
         <Button state="disabled" onClick={handleDownExcel}>
           DownExcel
         </Button>
-      </Sidebar>
+      </Navbar2>
       <Searchbar>
         <SearchField
-          searchId={"id"}
-          searchDisplay={"User ID"}
+          searchId={"username"}
+          searchDisplay={"Username"}
           boxWidth={"6rem"}
-          value={searchForm.id}
+          value={searchForm.username}
           onChange={handleFormOnChange}
         />
         <SearchField
-          searchId={"ofc_cd"}
-          searchDisplay={"Office Code"}
-          boxWidth={"5rem"}
-          value={searchForm.ofc_cd}
+          searchId={"email"}
+          searchDisplay={"Email"}
+          boxWidth={"6rem"}
+          value={searchForm.email}
           onChange={handleFormOnChange}
         />
       </Searchbar>

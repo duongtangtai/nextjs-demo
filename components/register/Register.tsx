@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState, FormEvent, ChangeEvent } from "react";
 import { API_MAIL, API_AUTH_REGISTER } from "@/lib/utils";
@@ -14,7 +14,7 @@ import {
   SignInSection,
 } from "./styled";
 import Link from "next/link";
-import { MdVisibility, MdVisibilityOff} from "react-icons/md";
+import { MdVisibility, MdVisibilityOff } from "react-icons/md";
 
 const initRegisterForm: RegisterForm = {
   email: "",
@@ -27,6 +27,7 @@ const Register = () => {
   const [registerForm, setRegisterForm] = useState(initRegisterForm);
   const [isPasswordShown, setIsPasswordShown] = useState(false);
   const [registerProgress, setRegisterProgress] = useState(0);
+  const [errMsg, setErrMsg] = useState<string | undefined>("");
   //0: unfinished, 1: succeeded, 2: failed
 
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
@@ -37,7 +38,7 @@ const Register = () => {
       return;
     }
     //call request
-    const res = await fetch(API_AUTH_REGISTER, {
+    const response = await fetch(API_AUTH_REGISTER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,9 +49,11 @@ const Register = () => {
         username: registerForm.username,
       }),
     });
-    const result: RegisterResult = await res.json();
-    if (!result.isSuccessful) {
+    const {statusCode, errors} : ResponseDTO = await response.json()
+
+    if (statusCode !== 201) {
       setRegisterProgress(2); //fail
+      setErrMsg(errors.toString())
     } else {
       setRegisterProgress(1); //successfully
       //clear all input
@@ -142,7 +145,7 @@ const Register = () => {
             onChange={handleFormOnChange}
           />
           <EyeIconContainer
-          onClick={() => setIsPasswordShown(!isPasswordShown)}
+            onClick={() => setIsPasswordShown(!isPasswordShown)}
           >
             {isPasswordShown ? <MdVisibility /> : <MdVisibilityOff />}
           </EyeIconContainer>
@@ -160,18 +163,18 @@ const Register = () => {
             onChange={handleFormOnChange}
           />
           <EyeIconContainer
-          onClick={() => setIsPasswordShown(!isPasswordShown)}
+            onClick={() => setIsPasswordShown(!isPasswordShown)}
           >
             {isPasswordShown ? <MdVisibility /> : <MdVisibilityOff />}
           </EyeIconContainer>
         </RegisterField>
         {registerProgress === 1 ? (
-            <span style={{ color: "blue" }}>Registered successfully</span>
-          ) : registerProgress === 2 ? (
-            <span style={{ color: "red" }}>Email already existed</span>
-          ) : (
-            ""
-          )}
+          <span style={{ color: "blue" }}>Registered successfully</span>
+        ) : registerProgress === 2 ? (
+          <span style={{ color: "red" }}>{errMsg}</span>
+        ) : (
+          ""
+        )}
         <Button $bgcolor="#0d6efd" $color="white" type="submit">
           Sign Up
         </Button>

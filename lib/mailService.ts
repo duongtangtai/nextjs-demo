@@ -1,4 +1,5 @@
-var nodemailer = require("nodemailer");
+var nodemailer = require('nodemailer');
+
 //-----------------------------------------------------------------------------
 export async function sendMail({subject, toEmail, text} : MailInfo) {
   var transporter = nodemailer.createTransport({

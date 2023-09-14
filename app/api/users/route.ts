@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UserRepo } from "@/BE/users/UserRepo";
+import { requestHandler } from "@/lib/Request.service";
+import { BE_USER } from "@/lib/utils";
 
 export async function GET(request: NextRequest){
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id") ?? "";
-    const ofc_cd = searchParams.get("ofc_cd") ?? "";
-
-    const retrieveResult: ResponseDTO = UserRepo.getUsers({id, ofc_cd});
-
-    if (retrieveResult.statusCode == 200) {
-        return NextResponse.json({
-            isSuccessful: true,
-            userInfo: retrieveResult.content
-        } as {isSuccessful: boolean, userInfo: UserInfo[]})
-    } else {
-        return NextResponse.json({isSuccessful: false} as RegisterResult)
+    const username = searchParams.get("username") ?? "";
+    const email = searchParams.get("email") ?? "";
+    const access_token = request.cookies.get("access_token")?.value;
+    const refresh_token = request.cookies.get("refresh_token")?.value
+    console.log(`Get users with username =  ${username} and email = ${email}`)
+    const responseDto : ResponseDTO = await requestHandler({
+        request,
+        path: `${BE_USER}?username=${username}&email${email}`,
+        method: "GET",
+        access_token,
+        refresh_token,
+    })
+    if (responseDto.statusCode === 401) {
+        NextResponse.redirect("/login")
     }
+    return NextResponse.json(responseDto)    
 }

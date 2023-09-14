@@ -22,7 +22,7 @@ const handleGetUsers = ({id, ofc_cd}: GetUsersProps): ResponseDTO => {
         errors: [],
         hasErrors: false,
         statusCode: 200,
-        timeStamp: new Date(),
+        timeStamp: new Date().toISOString(),
     }
 }
 

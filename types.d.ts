@@ -2,32 +2,28 @@ type ResponseDTO = {
     content: object | string,
     hasErrors: boolean,
     errors: string[],
-    timeStamp: Date,
+    timeStamp: string,
     statusCode: number,
+}
+// LOGIN
+type LoginDto = {
+    email: string;
+    password: string;
 }
 
 type LoginResult = {
     isSuccessful: boolean,
-    userInfo?: UserInfo
+    userInfo?: UserInfo,
+    error?: string,
+    access_token?: string,
+    refresh_token?: string,
 }
 
-type RegisterResult = {
-    isSuccessful: boolean,
-    userInfo?: UserInfo
-}
 
 type UserInfo = {
     id: string,
     email: string,
-    password: string,
     username: string,
-    ofc_cd: string,
-    cnt_cd: string,
-    acc_sts: "active" | "blocked",
-    upd_usr: string,
-    upd_dt: string,
-    cre_usr: string,
-    cre_dt: string
 }
 
 type RegisterForm = {
