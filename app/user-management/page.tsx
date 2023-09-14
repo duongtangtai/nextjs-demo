@@ -11,6 +11,7 @@ import {
 } from "@/components/index";
 import { API_USERS } from "@/lib/utils";
 import Sidebar from "@/components/sidebar/Sidebar";
+import { GetServerSidePropsContext } from "next";
 
 type SearchForm = {
   username: string;
@@ -21,8 +22,7 @@ const initSearchForm: SearchForm = {
   username: "",
   email: "",
 };
-
-export default function Home() {
+export default async function Home() {
   const [searchForm, setSearchForm] = useState<SearchForm>(initSearchForm);
   const [rows, setRows] = useState<UserInfo[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

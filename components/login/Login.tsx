@@ -4,7 +4,7 @@ import React, { useState, useEffect, FormEvent } from "react";
 import { API_AUTH_LOGIN } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { setCookie, getCookie } from "cookies-next";
-import { signIn, useSession} from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 import {
   LoginContainer,
@@ -26,8 +26,7 @@ const Login = () => {
   const [doesLoginFail, setDoesLoginFail] = useState(false);
   const [errMsg, setErrMsg] = useState<string | undefined>("");
   const router = useRouter();
-  const { data: session} = useSession();
-
+  const { data: session } = useSession();
 
   //check use session or userInfo
   useEffect(() => {
@@ -40,7 +39,8 @@ const Login = () => {
   const handleSignIn = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     //send a post request to check password
-
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 30); // expire after 30 days
     const res = await fetch(API_AUTH_LOGIN, {
       method: "POST",
       headers: {
@@ -49,41 +49,24 @@ const Login = () => {
       body: JSON.stringify({
         email,
         password,
+        ...(isRemembered && {expires}),
       }),
     });
 
-    const {
-      isSuccessful,
-      error,
-      userInfo,
-      access_token,
-      refresh_token,
-    }: LoginResult = await res.json();
+    const { content, hasErrors, errors }: ResponseDTO = await res.json();
 
-    if (!isSuccessful) {
+    if (hasErrors) {
       setDoesLoginFail(true);
-      setErrMsg(error);
+      setErrMsg(errors.toString());
     } else {
       //check remember
-      if (isRemembered) {
-        const maxAge = 60 * 60 * 24 * 30;
-        setCookie("userInfo", JSON.stringify(userInfo), { maxAge });
-        setCookie("access_token", access_token, { maxAge });
-        setCookie("refresh_token", refresh_token, { maxAge });
-      } else {
-        //delete when browser is closed
-        setCookie("userInfo", JSON.stringify(userInfo));
-        setCookie("access_token", access_token);
-        setCookie("refresh_token", refresh_token);
-      }
-
+      setCookie("userInfo", JSON.stringify(content), {
+        ...(isRemembered && {expires})
+      });
       router.push("/");
     }
   };
-  const reloadSession = () => {
-    const event = new Event("visibilitychange");
-    document.dispatchEvent(event);
-  };
+
   console.log("render login component");
 
   return (

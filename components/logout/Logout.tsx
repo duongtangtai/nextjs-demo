@@ -4,13 +4,15 @@ import React from "react";
 import { ButtonLogout } from "./styled";
 import { signOut } from "next-auth/react";
 import { deleteCookie} from "cookies-next";
+import { API_AUTH_LOGOUT } from "@/lib/utils";
 
 const Logout = () => {
-  const handleLogout = () => {
+  const handleLogout = async () => {
     //check userInfo or Session
     deleteCookie("userInfo")
-    deleteCookie("access_token")
-    deleteCookie("refresh_token")
+    await fetch(API_AUTH_LOGOUT, {
+      method: "POST"
+    })
     signOut();
   };
 

@@ -1,42 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { BE_AUTH_LOGIN } from "@/lib/utils";
 import { requestHandler } from "@/lib/Request.service";
+import { setTokens } from "@/lib/Response.service";
+
 
 export async function POST(request: NextRequest) {
-    let loginResult: LoginResult | null = null;
+    let response: Response;
     try {
-        const { email, password }: LoginDto = await request.json();
-        console.log("login")
-        const { content, errors, statusCode }: ResponseDTO = await requestHandler({
+        const { email, password, expires}: LoginDto = await request.json();
+        console.log(`login with email : ${email} and password ${password}`)
+        response = await requestHandler({
             request,
             path: BE_AUTH_LOGIN,
             method: "POST",
             payload: {email, password},
+            isTokenRequired: false,
         });
-        switch (statusCode) {
+        
+        switch (response.status) {
             case 200:
-                const { access_token, refresh_token, ...userInfo } = content as UserInfo & { access_token: string, refresh_token: string }
-                loginResult = {
-                    isSuccessful: true,
-                    userInfo: userInfo,
-                    access_token,
-                    refresh_token,
-                }
-                break;
+                const { content, errors, hasErrors} : ResponseDTO & { access_token: string, refresh_token: string } = await response.json();
+                const { access_token, refresh_token, ...userInfo} = content as {access_token: string, refresh_token: string}
+                setTokens(response, access_token, refresh_token, expires)
+                return new Response(JSON.stringify({hasErrors,  errors, content: userInfo}), {status: 200, headers: response.headers})
             default:
-                loginResult = {
-                    isSuccessful: false,
-                    error: errors.toString()
-                }
+                return response;
         }
     } catch (e: any) {
         if (!(e instanceof Error)) {
             e = new Error(e);
         }
-        loginResult = {
-            isSuccessful: false,
-            error: e.message as string
-        }
+        return new Response(JSON.stringify(e.message), {status: 400})
     }
-    return NextResponse.json(loginResult)
 }

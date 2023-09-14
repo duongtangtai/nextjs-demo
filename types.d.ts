@@ -9,14 +9,7 @@ type ResponseDTO = {
 type LoginDto = {
     email: string;
     password: string;
-}
-
-type LoginResult = {
-    isSuccessful: boolean,
-    userInfo?: UserInfo,
-    error?: string,
-    access_token?: string,
-    refresh_token?: string,
+    expires: string;
 }
 
 
