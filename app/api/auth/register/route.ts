@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
     try {
         const { email, password, username } = await request.json();
         response  = await requestHandler({
-            request,
             path: BE_AUTH_REGISTER,
             method: "POST",
             payload: { email, password, username },

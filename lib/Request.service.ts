@@ -10,14 +10,21 @@ type RefreshTokenResult = {
 }
 
 type Props = {
-    request: NextRequest,
     path: string,
     method: "GET" | "POST" | "PUT" | "DELETE",
     payload?: object,
     isTokenRequired?: boolean, //if token required => this requestHandler will use token to get data
 }
 
-const requestHandler = async ({ request, path, payload, method, isTokenRequired }: Props): Promise<Response> => {
+
+
+const requestHandler = async ({ path, payload, method, isTokenRequired }: Props): Promise<Response> => {
+    // console.log("request handler =>>>>>>>>>>>>>>>>>>>>>>>" + isRefreshing)
+    // if (!isRefreshing) {
+    //     isRefreshing = true
+    //     console.log("start waiting")
+    //     await new Promise(resolve => setTimeout(resolve, 5000)).then(() => console.log("it's finished!!"))
+    // }
     const cookieStore = cookies()
     const access_token = cookieStore.get("access_token")?.value 
     const refresh_token = cookieStore.get("refresh_token")?.value
@@ -46,7 +53,11 @@ const requestHandler = async ({ request, path, payload, method, isTokenRequired 
             cookieStore.set("access_token", new_access_token)
             cookieStore.set("refresh_token", new_refresh_token)
             console.log("refresh successfully!")
-            return requestHandler({ request, path, payload, method, isTokenRequired })
+            console.log("new_access_token")
+            console.log(new_access_token)
+            console.log("new_refresh_token")
+            console.log(new_refresh_token)
+            return requestHandler({path, payload, method, isTokenRequired })
         } else {
             return new Response(JSON.stringify(responseDto), {status: responseDto.statusCode});
         }
@@ -54,11 +65,9 @@ const requestHandler = async ({ request, path, payload, method, isTokenRequired 
     let response = new Response(JSON.stringify(responseDto), {status: responseDto.statusCode})
     if (access_token && refresh_token) {
         console.log("copy tokens")
-        console.log("expires:")
-        console.log(cookieStore.getAll())
-        console.log(cookieStore.get("expires")?.value)
-        setTokens(response, access_token, refresh_token, cookieStore.get("expires")?.value)
+        setTokens(access_token, refresh_token, cookieStore.get("expires")?.value)
     }
+    console.log("FINISHED REQUEST =>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     return response
 }
 

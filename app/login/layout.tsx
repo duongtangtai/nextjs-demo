@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import WrapperProvider from "@/context/WrapperProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,11 +13,5 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className} suppressHydrationWarning={true} style={{overflow: "hidden"}}>
-        <WrapperProvider>{children}</WrapperProvider>
-      </body>
-    </html>
-  );
+  return <main className={inter.className}>{children}</main>;
 }

@@ -18,6 +18,7 @@ const SearchField = ({searchId, searchDisplay, boxWidth, value, onChange} : Prop
           value={value}
           name={searchId}
           onChange={onChange}
+          autoComplete="off"
         />
       </SearchFieldContainer>
 )};

@@ -24,7 +24,7 @@ type RegisterForm = {
     username: string,
     password: string,
     password2: string,
-  }
+}
 
 type MailInfo = {
     subject: string,
@@ -44,3 +44,13 @@ type TableHeaderConfig = {
     width?: string,
     sortDirection?: "asc" | "desc"
 }
+
+type ToastObject = {
+    notify: (options: Omit<ToastData, "id">) => void;
+};
+
+type ToastData = {
+    id: number;
+    type: "success" | "error" | "warning" | "info";
+    message: string;
+};

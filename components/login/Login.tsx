@@ -59,7 +59,6 @@ const Login = () => {
       setDoesLoginFail(true);
       setErrMsg(errors.toString());
     } else {
-      //check remember
       setCookie("userInfo", JSON.stringify(content), {
         ...(isRemembered && {expires})
       });

@@ -11,7 +11,6 @@ import {
 } from "@/components/index";
 import { API_USERS } from "@/lib/utils";
 import Sidebar from "@/components/sidebar/Sidebar";
-import { GetServerSidePropsContext } from "next";
 
 type SearchForm = {
   username: string;
@@ -22,11 +21,11 @@ const initSearchForm: SearchForm = {
   username: "",
   email: "",
 };
-export default async function Home() {
+
+export default function Home() {
   const [searchForm, setSearchForm] = useState<SearchForm>(initSearchForm);
   const [rows, setRows] = useState<UserInfo[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const rowHandlers = useMemo(() => {
     return {
       rows,
@@ -46,56 +45,16 @@ export default async function Home() {
         displayName: "Office Code",
       },
       {
-        id: "updatedBy",
+        id: "updated_by",
         displayName: "Update User",
       },
       {
-        id: "updatedAt",
+        id: "updated_at",
         displayName: "Update Date",
       },
     ],
     []
   );
-
-  const handleRetrieve = useCallback(async () => {
-    //call request
-    const response = await fetch(
-      `${API_USERS}?username=${searchForm.username}&email=${searchForm.email}`
-    );
-    const {content, hasErrors, errors} : ResponseDTO = await response.json();
-    if (hasErrors) {
-      alert("error happens: " + errors.toString())
-    } else {
-      const users = content as UserInfo[];
-      setRows([...users])
-    }
-  }, [searchForm]);
-
-  const handleCopy = useCallback(() => {
-    //get selected row
-    const selectedId = rowRef.current;
-    if (!selectedId) {
-      return;
-    }
-    const selectedRow = rows.filter((row) => row.id === selectedId)[0];
-
-    //find max id
-    let maxId = String(Math.max(...rows.map((row) => parseInt(row.id))) + 1);
-
-    //insert last
-    setRows([
-      ...rows,
-      {
-        ...selectedRow,
-        id: maxId,
-      },
-    ]);
-  }, [rows]);
-
-  const handleSave = useCallback(async () => {
-    alert("handleSave");
-  }, []);
-  const handleDownExcel = useCallback(() => {}, []);
 
   const handleFormOnChange = useCallback(
     ({ target }: ChangeEvent<HTMLInputElement>) => {
@@ -108,6 +67,50 @@ export default async function Home() {
     },
     []
   );
+
+  const handleRetrieve = useCallback(async () => {
+    //call request
+    const response = await fetch(
+      `${API_USERS}?username=${searchForm.username}&email=${searchForm.email}`
+    );
+    const { content, hasErrors, errors }: ResponseDTO = await response.json();
+    if (hasErrors) {
+      alert("error happens: " + errors.toString());
+    } else {
+      const users = content as UserInfo[];
+      setRows([...users]);
+    }
+    
+  }, [searchForm]);
+
+  // const handleCopy = useCallback(() => {
+  //   //get selected row
+  //   const selectedId = rowRef.current;
+  //   if (!selectedId) {
+  //     return;
+  //   }
+  //   const selectedRow = rows.filter((row) => row.id === selectedId)[0];
+
+  //   //find max id
+  //   let maxId = String(Math.max(...rows.map((row) => parseInt(row.id))) + 1);
+
+  //   //insert last
+  //   setRows([
+  //     ...rows,
+  //     {
+  //       ...selectedRow,
+  //       id: maxId,
+  //     },
+  //   ]);
+  // }, [rows]);
+
+  const handleAdd = useCallback(() => {
+    //add one more row
+  }, [rows])
+
+  const handleDelete = useCallback(() => {
+    //delete selected row
+  }, [rows])
 
   console.log("render ui with rows");
   console.log(rows);
@@ -124,11 +127,8 @@ export default async function Home() {
         handleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         <Button onClick={handleRetrieve}>Retrieve</Button>
-        <Button onClick={handleCopy}>Copy</Button>
-        <Button onClick={handleSave}>Save</Button>
-        <Button state="disabled" onClick={handleDownExcel}>
-          DownExcel
-        </Button>
+        <Button onClick={handleAdd}>Add</Button>
+        <Button onClick={handleDelete}>Delete</Button>
       </Navbar2>
       <Searchbar>
         <SearchField

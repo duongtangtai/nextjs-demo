@@ -10,7 +10,6 @@ export async function POST(request: NextRequest) {
         const { email, password, expires}: LoginDto = await request.json();
         console.log(`login with email : ${email} and password ${password}`)
         response = await requestHandler({
-            request,
             path: BE_AUTH_LOGIN,
             method: "POST",
             payload: {email, password},
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
             case 200:
                 const { content, errors, hasErrors} : ResponseDTO & { access_token: string, refresh_token: string } = await response.json();
                 const { access_token, refresh_token, ...userInfo} = content as {access_token: string, refresh_token: string}
-                setTokens(response, access_token, refresh_token, expires)
+                setTokens(access_token, refresh_token, expires)
                 return new Response(JSON.stringify({hasErrors,  errors, content: userInfo}), {status: 200, headers: response.headers})
             default:
                 return response;

@@ -1,5 +1,3 @@
-// "use client";
-
 import React, { MouseEventHandler } from "react";
 import {
   SidebarContainer,
@@ -7,7 +5,6 @@ import {
   SidebarMenu,
   SidebarTitle,
   SidebarContent,
-  SidebarLink,
 } from "./styled";
 import { AiOutlineMenu } from "react-icons/ai";
 import Link from "next/link";

@@ -8,6 +8,7 @@ const nextConfig = {
         ssr: true,
       }
     },
+    reactStrictMode: false
   }
 
 module.exports = nextConfig

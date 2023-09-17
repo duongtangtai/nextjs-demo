@@ -10,8 +10,7 @@ export async function GET(request: NextRequest) {
         const email = searchParams.get("email") ?? "";
         console.log(`Get users with username =  ${username} and email = ${email}`)
         response = await requestHandler({
-            request,
-            path: `${BE_USER}?username=${username}&email${email}`,
+            path: `${BE_USER}?username=${username}&email=${email}`,
             method: "GET",
             isTokenRequired: true,
         })
