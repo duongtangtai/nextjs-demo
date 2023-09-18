@@ -16,17 +16,17 @@ const SlideInOut = keyframes`
       transform: translateX(100%);
       opacity:0;
     }
-    25% {
+    10% {
       transform: translateX(0%);
       opacity:1;
     }
-    75% {
+    70% {
       transform: translateX(0%);
       opacity:1;
     }
     100% {
-      /* transform: translateX(100%);
-      opacity:0; */
+      transform: translateX(100%);
+      opacity:0;
     }
 `
 
@@ -35,7 +35,7 @@ export const MessageContainer = styled.div`
     box-shadow: 0.2rem 0.2rem 2rem #0000001f;
     display: flex;
     flex-direction: column;
-    animation: ${SlideInOut} 5s ease-in-out forwards;
+    animation: ${SlideInOut} 4s ease-in-out forwards;
 `
 
 type ToastTitleProps = {

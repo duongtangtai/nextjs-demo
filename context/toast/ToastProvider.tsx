@@ -15,11 +15,11 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
           : Math.max(...toasts.map((toast) => toast.id)) + 1;
       setToasts((prev) => [
         ...prev,
-        { id: nextId, type: options.type, message: options.message },
+        { id: nextId, type: options.type, message: options.message},
       ]);
-      // setTimeout(() => {
-      //   setToasts((prev) => prev.filter((toast) => toast.id != nextId));
-      // }, 5000);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((toast) => toast.id != nextId));
+      }, 4000);
     },
   };
   return (
