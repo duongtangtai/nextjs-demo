@@ -1,6 +1,6 @@
 "use client"
 
-import React, {useEffect, useState } from "react";
+import React, {memo, useEffect, useState } from "react";
 import {
   NavbarContainer,
   NavbarInfoProject,
@@ -40,4 +40,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar
+export default memo(Navbar)

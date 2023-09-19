@@ -17,6 +17,13 @@ type UserInfo = {
     id: string,
     email: string,
     username: string,
+    roles: string,
+}
+
+type RoleInfo = {
+    id: string,
+    name: string,
+    description: string,
 }
 
 type RegisterForm = {
@@ -46,11 +53,21 @@ type TableHeaderConfig = {
 }
 
 type ToastObject = {
-    notify: (options: Omit<ToastData, "id">) => void;
+    notify: (options: Omit<ToastData, "id", "onClick">) => void;
 };
 
 type ToastData = {
-    id: number;
+    id: string;
     type: "success" | "error" | "warning" | "info";
     message: string;
+    close: Function
+};
+
+type Input = {
+    id: string;
+    name: string;
+    type: "text" | "email" | "number" | "password";
+    description: string,
+    placeHolder: string;
+    isRequired?: boolean;
 };

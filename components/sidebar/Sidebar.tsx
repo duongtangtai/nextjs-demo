@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from "react";
+import React, { MouseEventHandler, memo } from "react";
 import {
   SidebarContainer,
   SidebarHeader,
@@ -59,4 +59,4 @@ const Sidebar = ({ isOpen, handleSidebar }: Props) => {
   );
 };
 
-export default Sidebar;
+export default memo(Sidebar);

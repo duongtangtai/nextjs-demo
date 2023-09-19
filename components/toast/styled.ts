@@ -8,7 +8,6 @@ export const Container = styled.div`
     right: 0px;
     top: 30px;
     font-size: 1.5rem;
-    pointer-events: none;
 `
 
 const SlideInOut = keyframes`
@@ -46,9 +45,9 @@ export const ToastTitle = styled.div<ToastTitleProps>`
   flex:1;
   background-color: ${props =>
     props.$type === "success" ? "#28a745" :
-    props.$type === "warning" ? "#ffc107" :
-    props.$type === "error" ? "#dc3545" :
-    "#138496"
+      props.$type === "warning" ? "#ffc107" :
+        props.$type === "error" ? "#dc3545" :
+          "#138496"
   };
   color: white;
   font-size: large;
@@ -57,6 +56,15 @@ export const ToastTitle = styled.div<ToastTitleProps>`
   text-transform: uppercase;
   border-top-left-radius: 0.3rem;
   border-top-right-radius: 0.3rem;
+  display: flex;
+  justify-content: space-between;
+`
+
+export const ToastClose = styled.span`
+  text-align: end;
+  &:hover {
+    cursor: pointer;
+  }
 `
 
 export const ToastMessage = styled.div`

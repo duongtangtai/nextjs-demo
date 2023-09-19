@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ToastContainer from "@/components/toast/ToastContainer";
 import { createContext } from "react";
+import uuid from "react-uuid";
 
 export const ToastContext = createContext({} as ToastObject);
 
@@ -9,17 +10,23 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 
   const toast: ToastObject = {
     notify(options) {
-      const nextId: number =
-        toasts.length === 0
-          ? 1
-          : Math.max(...toasts.map((toast) => toast.id)) + 1;
-      setToasts((prev) => [
-        ...prev,
-        { id: nextId, type: options.type, message: options.message},
-      ]);
-      setTimeout(() => {
+      const nextId: string = uuid();
+      const timeoutId = setTimeout(() => {
         setToasts((prev) => prev.filter((toast) => toast.id != nextId));
       }, 4000);
+      setToasts((prev) => [
+        ...prev,
+        { 
+          id: nextId, 
+          type: options.type, 
+          message: options.message, 
+          close() {
+            console.log("close toast")
+            clearTimeout(timeoutId);
+            setToasts((prev) => prev.filter((toast) => toast.id != nextId));
+          }
+        },
+      ]);
     },
   };
   return (
@@ -29,3 +36,23 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     </ToastContext.Provider>
   );
 };
+
+//   const toast: ToastObject = {
+//     notify(options) {
+//       const nextId: string = uuid();
+//       setToasts((prev) => [
+//         ...prev,
+//         { id: nextId, type: options.type, message: options.message},
+//       ]);
+//       setTimeout(() => {
+//         setToasts((prev) => prev.filter((toast) => toast.id != nextId));
+//       }, 4000);
+//     },
+//   };
+//   return (
+//     <ToastContext.Provider value={toast}>
+//       {children}
+//       <ToastContainer toasts={toasts} />
+//     </ToastContext.Provider>
+//   );
+// };

@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, ChangeEvent, useCallback, useMemo, useRef } from "react";
+import {
+  useState,
+  ChangeEvent,
+  useCallback,
+  useMemo,
+  useRef,
+  useContext,
+  useEffect,
+} from "react";
 import {
   Navbar,
   Navbar2,
@@ -9,8 +17,13 @@ import {
   SearchField,
   Table,
 } from "@/components/index";
-import { API_USERS } from "@/lib/utils";
+import { API_ROLES, API_USERS } from "@/lib/utils";
 import Sidebar from "@/components/sidebar/Sidebar";
+import { ToastContext } from "@/context/toast/ToastProvider";
+import { Input, Modal, Form, Select, Space } from "antd";
+import Alert from "@/components/alert/Alert";
+
+const { Option } = Select;
 
 type SearchForm = {
   username: string;
@@ -22,17 +35,49 @@ const initSearchForm: SearchForm = {
   email: "",
 };
 
+const addUserPrefix = "add_user";
+const updateUserPrefix = "update_user";
+
 export default function Home() {
+  const [addForm] = Form.useForm();
+  const [updateForm] = Form.useForm();
   const [searchForm, setSearchForm] = useState<SearchForm>(initSearchForm);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [addUserBtnDisabled, setAddUserBtnDisabled] = useState<boolean>(true);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+  const [updateUserBtnDisabled, setUpdateUserBtnDisabled] =
+    useState<boolean>(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState<boolean>(false);
+  const toast = useContext(ToastContext);
+  const rowRef = useRef("");
   const [rows, setRows] = useState<UserInfo[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const rowHandlers = useMemo(() => {
     return {
       rows,
       setRows,
     };
   }, [rows]);
-  const rowRef = useRef("");
+  //init roles
+  const [roles, setRoles] = useState<RoleInfo[]>([]);
+  useEffect(() => {
+    const getRoles = async () => {
+      const res = await fetch(API_ROLES, {
+        method: "GET",
+      });
+      const { content, statusCode, errors }: ResponseDTO = await res.json();
+      console.log("get roles response:");
+      if (statusCode !== 200) {
+        toast.notify({
+          type: "error",
+          message: errors.toString(),
+        });
+      } else {
+        setRoles(content as RoleInfo[]);
+      }
+    };
+    getRoles();
+  }, []);
 
   const headerConfigs: TableHeaderConfig[] = useMemo(
     () => [
@@ -45,6 +90,10 @@ export default function Home() {
         displayName: "Office Code",
       },
       {
+        id: "roles",
+        displayName: "Roles",
+      },
+      {
         id: "updated_by",
         displayName: "Update User",
       },
@@ -55,6 +104,10 @@ export default function Home() {
     ],
     []
   );
+
+  const handleSidebar = useCallback(() => {
+    setIsSidebarOpen(!isSidebarOpen);
+  }, [isSidebarOpen]);
 
   const handleFormOnChange = useCallback(
     ({ target }: ChangeEvent<HTMLInputElement>) => {
@@ -80,55 +133,158 @@ export default function Home() {
       const users = content as UserInfo[];
       setRows([...users]);
     }
-    
   }, [searchForm]);
 
-  // const handleCopy = useCallback(() => {
-  //   //get selected row
-  //   const selectedId = rowRef.current;
-  //   if (!selectedId) {
-  //     return;
-  //   }
-  //   const selectedRow = rows.filter((row) => row.id === selectedId)[0];
+  const handleOpenAddModal = () => {
+    addForm.setFieldValue("id", "");
+    addForm.setFieldValue("username", "");
+    addForm.setFieldValue("email", "");
+    addForm.setFieldValue("password", "");
+    addForm.setFieldValue("roles", []);
+    setIsAddModalOpen(true);
+  };
 
-  //   //find max id
-  //   let maxId = String(Math.max(...rows.map((row) => parseInt(row.id))) + 1);
+  const handleOpenUpdateModal = useCallback(() => {
+    if (rowRef.current === "") {
+      toast.notify({
+        type: "info",
+        message: "Please select a row",
+      });
+      return;
+    }
+    setIsUpdateModalOpen(true);
+    const userInfo = rows.filter((user) => user.id === rowRef.current)[0];
+    console.log("handleOpenUpdateModal");
+    console.log(userInfo);
+    updateForm.setFieldValue("id", userInfo.id);
+    updateForm.setFieldValue("username", userInfo.username);
+    updateForm.setFieldValue("email", userInfo.email);
+    updateForm.setFieldValue("password", "");
+    updateForm.setFieldValue(
+      "roles",
+      userInfo.roles === "" ? [] : userInfo.roles.split(",")
+    );
+  }, [rowRef, rows]);
 
-  //   //insert last
-  //   setRows([
-  //     ...rows,
-  //     {
-  //       ...selectedRow,
-  //       id: maxId,
-  //     },
-  //   ]);
-  // }, [rows]);
-
-  const handleAdd = useCallback(() => {
-    //add one more row
-  }, [rows])
-
-  const handleDelete = useCallback(() => {
+  const handleOpenDeleteAlert = useCallback(() => {
+    if (rowRef.current === "") {
+      toast.notify({
+        type: "info",
+        message: "Please select a row",
+      });
+      return;
+    }
     //delete selected row
-  }, [rows])
+    setIsDeleteAlertOpen(true);
+  }, [rowRef]);
 
-  console.log("render ui with rows");
-  console.log(rows);
+  const handleAddUser = async () => {
+    const username: string = addForm.getFieldValue("username");
+    const password: string = addForm.getFieldValue("password");
+    const email: string = addForm.getFieldValue("email");
+    const roles: string[] = addForm.getFieldValue("roles");
+    if (username === "" || password === "" || email === "") {
+      return;
+    }
+    const res = await fetch(API_USERS, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+        email,
+        roles,
+      }),
+    });
+    const { content, statusCode, errors }: ResponseDTO = await res.json();
+    const userInfo: UserInfo = content as UserInfo;
+    if (statusCode === 200) {
+      toast.notify({
+        type: "success",
+        message: `Add user ${userInfo.username} successfully!`,
+      });
+      handleAddUser();
+    } else {
+      toast.notify({
+        type: "warning",
+        message: `${errors.toString()}`,
+      });
+    }
+  };
+
+  //UPDATE USER
+  const handleUpdateUser = async () => {
+    console.log(updateForm.getFieldValue("id"));
+    const id: string = updateForm.getFieldValue("id");
+    const username: string = updateForm.getFieldValue("username");
+    const password: string = updateForm.getFieldValue("password");
+    const email: string = updateForm.getFieldValue("email");
+    const roles: string[] = updateForm.getFieldValue("roles");
+    const res = await fetch(`${API_USERS}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id,
+        username,
+        password,
+        email,
+        roles,
+      }),
+    });
+    const { statusCode, errors }: ResponseDTO = await res.json();
+    if (statusCode === 200) {
+      toast.notify({
+        type: "success",
+        message: `Update user ${username} successfully!`,
+      });
+      handleAddUser();
+    } else {
+      toast.notify({
+        type: "warning",
+        message: `${errors.toString()}`,
+      });
+    }
+  };
+
+  //DELETE USER
+  const handleCloseDeleteUserAlert = () => {
+    setIsDeleteAlertOpen(false);
+  };
+
+  const handleDeleteUser = useCallback(async () => {
+    const res = await fetch(`${API_USERS}?id=${rowRef.current}`, {
+      method: "DELETE",
+    });
+    const { statusCode, errors }: ResponseDTO = await res.json();
+    if (statusCode === 200) {
+      toast.notify({
+        type: "success",
+        message: `Delete user successfully!`,
+      });
+      setIsDeleteAlertOpen(false);
+      handleRetrieve();
+      rowRef.current = "";
+    } else {
+      toast.notify({
+        type: "error",
+        message: errors.toString(),
+      });
+    }
+  }, [rowRef]);
 
   return (
     <>
-      <Sidebar
-        isOpen={isSidebarOpen}
-        handleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
+      <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar} />
       <Navbar />
-      <Navbar2
-        title={"User Management ( ADM_SYS_0003 ) "}
-        handleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
+      <Navbar2 title={"User Management"} handleSidebar={handleSidebar}>
         <Button onClick={handleRetrieve}>Retrieve</Button>
-        <Button onClick={handleAdd}>Add</Button>
-        <Button onClick={handleDelete}>Delete</Button>
+        <Button onClick={handleOpenAddModal}>Add</Button>
+        <Button onClick={handleOpenUpdateModal}>Update</Button>
+        <Button onClick={handleOpenDeleteAlert}>Delete</Button>
       </Navbar2>
       <Searchbar>
         <SearchField
@@ -151,6 +307,246 @@ export default function Home() {
         rowHandlers={rowHandlers}
         rowRef={rowRef}
       />
+      {/* --------------------------------------------------------- ADD USER --------------------------------------------------------------*/}
+      <Modal
+        title="ADD USER"
+        open={isAddModalOpen}
+        onOk={handleAddUser}
+        onCancel={() => setIsAddModalOpen(false)}
+        okButtonProps={{ disabled: addUserBtnDisabled }}
+      >
+        <Form
+          form={addForm}
+          name={addUserPrefix}
+          labelCol={{
+            span: 8,
+          }}
+          wrapperCol={{
+            span: 16,
+          }}
+          style={{
+            maxWidth: 600,
+          }}
+          initialValues={{
+            remember: true,
+          }}
+          onPlay={() => setAddUserBtnDisabled(true)}
+          onFieldsChange={() => {
+            setAddUserBtnDisabled(
+              addForm.getFieldsError().some((field) => field.errors.length > 0)
+            );
+          }}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Username"
+            name="username"
+            rules={[
+              {
+                required: true,
+                message: "Please input your username!",
+              },
+              {
+                validator: (_, value) =>
+                  !value.includes(" ")
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("No spaces allowed")),
+              },
+            ]}
+          >
+            <Input autoComplete="off" />
+          </Form.Item>
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              {
+                required: true,
+                type: "email",
+                message: "Please input your email!",
+              },
+              {
+                validator: (_, value) =>
+                  !value.includes(" ")
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("No spaces allowed")),
+              },
+            ]}
+          >
+            <Input autoComplete="off" />
+          </Form.Item>
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: "Please input your password!",
+              },
+              {
+                validator: (_, value) =>
+                  !value.includes(" ")
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("No spaces allowed")),
+              },
+            ]}
+          >
+            <Input.Password autoComplete="off" />
+          </Form.Item>
+          <Form.Item label="Roles" name="roles">
+            <Select
+              mode="multiple"
+              placeholder="Choose user roles"
+              onChange={() => {}}
+              optionLabelProp="label"
+            >
+              {roles.map((role) => (
+                <Option
+                  key={role.name}
+                  value={role.name}
+                  label={role.description}
+                >
+                  <Space>
+                    <span
+                      role="img"
+                      aria-label={role.description}
+                      style={{ fontSize: "0.5rem" }}
+                    >
+                      {role.name}
+                    </span>
+                    {role.description}
+                  </Space>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+      {/* --------------------------------------------------------- UPDATE USER --------------------------------------------------------------*/}
+      <Modal
+        title="UPDATE USER"
+        open={isUpdateModalOpen}
+        onOk={handleUpdateUser}
+        onCancel={() => setIsUpdateModalOpen(false)}
+        okButtonProps={{ disabled: updateUserBtnDisabled }}
+      >
+        <Form
+          form={updateForm}
+          name={updateUserPrefix}
+          labelCol={{
+            span: 8,
+          }}
+          wrapperCol={{
+            span: 16,
+          }}
+          style={{
+            maxWidth: 600,
+          }}
+          initialValues={{
+            remember: true,
+          }}
+          onFieldsChange={() => {
+            setUpdateUserBtnDisabled(
+              updateForm
+                .getFieldsError()
+                .some((field) => field.errors.length > 0)
+            );
+          }}
+          autoComplete="off"
+        >
+          <Form.Item name="id" hidden>
+            <Input autoComplete="off" />
+          </Form.Item>
+          <Form.Item
+            label="Username"
+            name="username"
+            rules={[
+              {
+                required: true,
+                message: "Please input your username!",
+              },
+              {
+                validator: (_, value) =>
+                  !value.includes(" ")
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("No spaces allowed")),
+              },
+            ]}
+          >
+            <Input autoComplete="off" />
+          </Form.Item>
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              {
+                required: true,
+                type: "email",
+                message: "Please input your email!",
+              },
+              {
+                validator: (_, value) =>
+                  !value.includes(" ")
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("No spaces allowed")),
+              },
+            ]}
+          >
+            <Input autoComplete="off" />
+          </Form.Item>
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[
+              {
+                validator: (_, value) =>
+                  !value.includes(" ")
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("No spaces allowed")),
+              },
+            ]}
+          >
+            <Input.Password autoComplete="off" />
+          </Form.Item>
+          <Form.Item label="Roles" name="roles">
+            <Select
+              mode="multiple"
+              style={{
+                width: "100%",
+              }}
+              placeholder="Choose user roles"
+              onChange={() => {}}
+              optionLabelProp="label"
+            >
+              {roles.map((role) => (
+                <Option
+                  key={role.name}
+                  value={role.name}
+                  label={role.description}
+                >
+                  <Space>
+                    <span
+                      role="img"
+                      aria-label={role.description}
+                      style={{ fontSize: "0.5rem" }}
+                    >
+                      {role.name}
+                    </span>
+                    {role.description}
+                  </Space>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+      {isDeleteAlertOpen && (
+        <Alert
+          message={`Do you want to delete this user?`}
+          handleConfirm={handleDeleteUser}
+          handleClose={handleCloseDeleteUserAlert}
+        />
+      )}
     </>
   );
 }

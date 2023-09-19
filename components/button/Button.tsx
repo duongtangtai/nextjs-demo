@@ -7,7 +7,7 @@ type Props = {
   state?: "active" | "disabled";
 };
 
-const Button = ({ children, onClick, state = "active" }: Props) => {
+const Button = ({children, onClick, state = "active" }: Props) => {
   console.log("render button")
   if (state === "active") {
     return (

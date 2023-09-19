@@ -1,11 +1,18 @@
 import React from "react";
-import { MessageContainer, ToastMessage, ToastTitle } from "./styled";
+import {
+  MessageContainer,
+  ToastClose,
+  ToastMessage,
+  ToastTitle,
+} from "./styled";
 
-
-const Toast = ({ type, message }: Omit<ToastData, "id">) => {
+const Toast = ({ type, message, close }: Omit<ToastData, "id">) => {
   return (
     <MessageContainer>
-      <ToastTitle $type={type}>{type}</ToastTitle>
+      <ToastTitle $type={type}>
+        {type}
+        <ToastClose onClick={() => close()}>X</ToastClose>
+      </ToastTitle>
       <ToastMessage>{message}</ToastMessage>
     </MessageContainer>
   );

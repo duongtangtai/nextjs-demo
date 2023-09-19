@@ -64,6 +64,7 @@ export const CloseModalBtn = styled.button`
 export const ModalBody = styled.div`
     margin: auto;
     position: relative;
+    width: 30%;
     z-index: 1;
     animation: ${growth} linear 0.3s;
     background-color: white;
