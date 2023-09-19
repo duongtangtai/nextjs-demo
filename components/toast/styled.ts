@@ -8,6 +8,7 @@ export const Container = styled.div`
     right: 0px;
     top: 30px;
     font-size: 1.5rem;
+    z-index: 9999;
 `
 
 const SlideInOut = keyframes`

@@ -205,7 +205,7 @@ export default function Home() {
         type: "success",
         message: `Add user ${userInfo.username} successfully!`,
       });
-      handleAddUser();
+      handleRetrieve();
     } else {
       toast.notify({
         type: "warning",
@@ -241,7 +241,7 @@ export default function Home() {
         type: "success",
         message: `Update user ${username} successfully!`,
       });
-      handleAddUser();
+      handleRetrieve();
     } else {
       toast.notify({
         type: "warning",
