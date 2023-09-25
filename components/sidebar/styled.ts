@@ -16,6 +16,7 @@ export const SidebarContainer = styled.div<SidebarParams>`
     display: flex;
     flex-direction: column;
     box-shadow: 5px;
+    z-index: 10;
 `
 
 export const SidebarHeader = styled.section`

@@ -21,6 +21,7 @@ type UserInfo = {
 }
 
 type RoleInfo = {
+    key: number,
     id: string,
     name: string,
     description: string,
