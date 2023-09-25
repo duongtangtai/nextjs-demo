@@ -16,6 +16,10 @@ const GlobalStyles = createGlobalStyle`
     body .no-scroll {
         overflow: hidden;
     }
+
+    .hidden {
+        display: none;
+    }
 `
 
 export default GlobalStyles

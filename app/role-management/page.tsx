@@ -59,7 +59,7 @@ const EditableCell = ({
     <td {...restProps}>
       {editing ? (
         <Form.Item
-          name={record.key + dataIndex}
+          name={`${record.key}_${dataIndex}`}
           style={{
             margin: 0,
           }}
@@ -117,7 +117,6 @@ const page = () => {
       const roles = content as RoleInfo[];
       roles.forEach((role, index) => {
         role.key = index;
-        console.log("index: " + index);
       });
       setData([...roles]);
     }
@@ -127,8 +126,9 @@ const page = () => {
     {
       title: "Id",
       dataIndex: "id",
-      editable: false,
-      visible: false
+      editable: true,
+      hidden: true,
+      className: "hidden",
     },
     {
       title: "Name",
@@ -167,9 +167,6 @@ const page = () => {
     };
   });
 
-  console.log("mergedColumns")
-  console.log(mergedColumns)
-
   const handleRowAdd = useCallback(() => {
     //add a new row to datasource
     let nextKey: number;
@@ -189,17 +186,16 @@ const page = () => {
     form.setFieldsValue({
       ...newRole,
     });
-    setEditingKeys(prev => [...prev, nextKey]);
+    setEditingKeys((prev) => [...prev, nextKey]);
   }, [data]);
 
-  const handleDelete = useCallback(() => {
-    console.log("handleDelete")
-    console.log(form.getFieldsValue())
-    //loop to check
-    //if undefined => simply delete
-    //if 
-  }, [editingKeys, form])
-
+  const handleRowDelete = useCallback(() => {
+    console.log("handleDelete");
+    console.log(form.getFieldsValue());
+    //if no id => simply delete row from datasource and editing keys
+    //if not exist in datasource => it's new
+    //if id => call a request to delete
+  }, [editingKeys, form]);
 
   return (
     <>
@@ -208,7 +204,7 @@ const page = () => {
       <Navbar2 title={"Role Management"} handleSidebar={handleSidebar}>
         <Button onClick={handleRetrieve}>Retrieve</Button>
         <Button onClick={handleRowAdd}>Row Add</Button>
-        <Button onClick={handleDelete}>Row Delete</Button>
+        <Button onClick={handleRowDelete}>Row Delete</Button>
         <Button onClick={() => {}}>Save</Button>
       </Navbar2>
       <Searchbar>
@@ -235,43 +231,50 @@ const page = () => {
             onSelect: (record, selected, selectedRows) => {
               console.log(record, selected, selectedRows);
               form.setFieldsValue({
-                [record.key + "name"] : record.name,
-                [record.key + "description"] : record.description,
-              })
-              setEditingKeys(prev => {
+                [`${record.key}_id`]: record.id,
+                [`${record.key}_name`]: record.name,
+                [`${record.key}_description`]: record.description,
+              });
+              setEditingKeys((prev) => {
                 if (!prev.includes(record.key)) {
-                  return [...prev, record.key]
+                  return [...prev, record.key];
                 } else {
-                  prev.splice(prev.indexOf(record.key), 1)
-                  return [...prev]
+                  prev.splice(prev.indexOf(record.key), 1);
+                  return [...prev];
                 }
-              })
+              });
             },
             selectedRowKeys: editingKeys,
-            onChange: (selectedRowKeys: React.Key[], selectedRows: RoleInfo[], info: {
-              type: RowSelectMethod}) => {
-              console.log("onchange hehe")
-              console.log(selectedRowKeys)
-              console.log(selectedRows)
-              console.log(info)
+            onChange: (
+              selectedRowKeys: React.Key[],
+              selectedRows: RoleInfo[],
+              info: {
+                type: RowSelectMethod;
+              }
+            ) => {
+              console.log("onchange hehe");
+              console.log(selectedRowKeys);
+              console.log(selectedRows);
+              console.log(info);
               if (info.type === "all") {
                 if (selectedRowKeys.length === 0) {
-                  setEditingKeys([])
+                  setEditingKeys([]);
                 } else {
-                  data.forEach(role => {
+                  data.forEach((role) => {
                     form.setFieldsValue({
-                      [role.key + "name"]: role.name,
-                      [role.key + "description"]: role.description
-                    })
-                  })
-                  setEditingKeys(data.map(role => role.key))
+                      [`${role.key}_id`]: role.id,
+                      [`${role.key}_name`]: role.name,
+                      [`${role.key}_description`]: role.description,
+                    });
+                  });
+                  setEditingKeys(data.map((role) => role.key));
                 }
               }
-            }
+            },
           }}
-
-          onChange={() => {console.log("onchange")}}
-
+          onChange={() => {
+            console.log("onchange");
+          }}
           components={{
             body: {
               cell: EditableCell,
@@ -281,7 +284,7 @@ const page = () => {
           dataSource={data}
           columns={mergedColumns}
           rowClassName="editable-row"
-          
+
           // pagination={{
           //   onChange: cancel,
           // }}
