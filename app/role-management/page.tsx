@@ -1,30 +1,12 @@
 "use client";
 
 import { Button, Navbar, Navbar2, SearchField, Searchbar } from "@/components";
-import Alert from "@/components/alert/Alert";
 import Sidebar from "@/components/sidebar/Sidebar";
 import { ToastContext } from "@/context/toast/ToastProvider";
 import { API_ROLES } from "@/lib/utils";
-import {
-  Button as AntButton,
-  Form,
-  FormInstance,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Table,
-  Typography,
-} from "antd";
-import { RowSelectMethod } from "antd/es/table/interface";
-import React, {
-  ChangeEvent,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Form, Input, InputNumber, Table } from "antd";
+import { RowSelectMethod, TableRowSelection } from "antd/es/table/interface";
+import React, { ChangeEvent, useContext, useMemo, useState } from "react";
 
 type SearchForm = {
   name: string;
@@ -54,7 +36,9 @@ const EditableCell = ({
   index: any;
   children: any;
 }) => {
-  const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
+  const inputNode = inputType === "number" ? 
+    <InputNumber onChange={(e) => {record[dataIndex] = e}}/> : 
+    <Input onChange={(e) => {record[dataIndex] = e.target.value}}/>;
   return (
     <td {...restProps}>
       {editing ? (
@@ -65,7 +49,7 @@ const EditableCell = ({
           }}
           rules={[
             {
-              required: true,
+              required: dataIndex !== "id",
               message: `Please Input ${title}!`,
             },
           ]}
@@ -87,41 +71,21 @@ const page = () => {
   const [data, setData] = useState<RoleInfo[]>([]);
   const [editingKeys, setEditingKeys] = useState<number[]>([]);
   const isEditing = (record: any) => editingKeys.includes(record.key);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
-  const handleSidebar = useCallback(() => {
+  const handleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
-  }, [isSidebarOpen]);
+  };
 
-  const handleFormOnChange = useCallback(
-    ({ target }: ChangeEvent<HTMLInputElement>) => {
-      if (!/\s/.test(target.value)) {
-        setSearchForm((prev) => ({
-          ...prev,
-          [target.name]: target.value,
-        }));
-      }
-    },
-    []
-  );
-
-  //button actions
-  const handleRetrieve = useCallback(async () => {
-    //call request
-    const response = await fetch(
-      `${API_ROLES}?name=${searchForm.name}&description=${searchForm.description}`
-    );
-    const { content, hasErrors, errors }: ResponseDTO = await response.json();
-    if (hasErrors) {
-      alert("error happens: " + errors.toString());
-    } else {
-      const roles = content as RoleInfo[];
-      roles.forEach((role, index) => {
-        role.key = index;
-      });
-      setData([...roles]);
+  const handleFormOnChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
+    if (!/\s/.test(target.value)) {
+      setSearchForm((prev) => ({
+        ...prev,
+        [target.name]: target.value,
+      }));
     }
-  }, [searchForm]);
-
+  };
+  //-------------------------------------------START TABLE HANDLING-------------------------------------------------
   const columns = [
     {
       title: "Id",
@@ -167,36 +131,199 @@ const page = () => {
     };
   });
 
-  const handleRowAdd = useCallback(() => {
-    //add a new row to datasource
-    let nextKey: number;
-    if (data.length === 0) {
-      nextKey = 1;
+  const handleRowOnSelect = (
+    record: RoleInfo,
+    selected: boolean,
+    selectedRows: RoleInfo[]
+  ) => {
+    console.log("ON-SELECT");
+    if (selected) {
+      form.setFieldsValue({
+        [`${record.key}_id`]: record.id,
+        [`${record.key}_name`]: record.name,
+        [`${record.key}_description`]: record.description,
+      });
+      setEditingKeys((prev) => [...prev, record.key]);
     } else {
-      nextKey = Math.max(...data.map((role) => role.key)) + 1;
+      setEditingKeys((prev) => {
+        prev.splice(prev.indexOf(record.key), 1);
+        return [...prev];
+      });
     }
-    const newRole: RoleInfo = {
-      key: nextKey,
-      id: "",
-      name: "",
-      description: "",
+  };
+
+  const handleRowOnChange = (
+    selectedRowKeys: React.Key[],
+    selectedRows: RoleInfo[],
+    info: {
+      type: RowSelectMethod;
+    }
+  ) => {
+    if (info.type === "all") {
+      if (selectedRowKeys.length === 0) { //deselect all
+        setEditingKeys([]);
+      } else {
+        data.forEach((role) => {
+          form.setFieldsValue({
+            [`${role.key}_id`]: role.id,
+            [`${role.key}_name`]: role.name,
+            [`${role.key}_description`]: role.description,
+          });
+        });
+        setEditingKeys(data.map((role) => role.key));
+      }
+    }
+  };
+
+  const rowSelection: TableRowSelection<RoleInfo> = {
+    type: "checkbox",
+    selectedRowKeys: editingKeys,
+    onSelect: handleRowOnSelect,
+    onChange: handleRowOnChange,
+  };
+
+  const components = {
+    body: {
+      cell: EditableCell,
+    },
+  };
+
+  //-------------------------------------------END TABLE HANDLING-------------------------------------------------
+  //-------------------------------------------START BUTTON FUNCTIONS-------------------------------------------------
+  //button actions
+  const handleRetrieve = useMemo(() => {
+    return async () => {
+      //clear everything before retrieving
+      setEditingKeys([]);
+      setDeletedIds([]);
+      //call request
+      const response = await fetch(
+        `${API_ROLES}?name=${searchForm.name}&description=${searchForm.description}`
+      );
+      const { content, hasErrors, errors }: ResponseDTO = await response.json();
+      if (hasErrors) {
+        alert("error happens: " + errors.toString());
+      } else {
+        const roles = content as RoleInfo[];
+        roles.forEach((role, index) => {
+          role.key = index;
+        });
+        setData([...roles]);
+      }
     };
+  }, [searchForm]);
 
-    setData([...data, newRole]);
-    form.setFieldsValue({
-      ...newRole,
-    });
-    setEditingKeys((prev) => [...prev, nextKey]);
-  }, [data]);
+  const handleRowAdd = useMemo(() => {
+    return () => {
+      //add a new row to datasource
+      let nextKey: number;
+      if (data.length === 0) {
+        nextKey = 1;
+      } else {
+        nextKey = Math.max(...data.map((role) => role.key)) + 1;
+      }
+      const newRole: RoleInfo = {
+        key: nextKey,
+        id: "",
+        name: "",
+        description: "",
+      };
 
-  const handleRowDelete = useCallback(() => {
-    console.log("handleDelete");
-    console.log(form.getFieldsValue());
-    //if no id => simply delete row from datasource and editing keys
-    //if not exist in datasource => it's new
-    //if id => call a request to delete
-  }, [editingKeys, form]);
+      setData([...data, newRole]);
+      form.setFieldsValue({
+        [`${nextKey}_id`]: newRole.id,
+        [`${nextKey}_name`]: newRole.name,
+        [`${nextKey}_description`]: newRole.description,
+      });
+      setEditingKeys((prev) => [...prev, nextKey]);
+    };
+  }, [data, form]);
 
+  const handleRowDelete = useMemo(() => {
+    return () => {
+      const formObj = form.getFieldsValue();
+      if (Object.keys(formObj).length === 0) {
+        toast.notify({
+          type: "info",
+          message: "Please select a row!",
+        });
+        return;
+      }
+      /*
+      loop through this obj => if ?_id => not undefined => add id to an array => when we save, send this array along with them
+      then delete from datasource and editing keys
+      */
+      for (const name in formObj) {
+        if (
+          name.indexOf("id") > 0 &&
+          formObj[name] !== undefined &&
+          formObj[name] !== ""
+        ) {
+          //this id needs to be stored
+          setDeletedIds((prev) => [...prev, formObj[name]]);
+        }
+        const key = parseInt(name.split("_")[0]);
+        //delete from datasource and editing keys
+        setData((prev) => prev.filter((role) => role.key !== key));
+        setEditingKeys((prev) =>
+          prev.filter((editingKey) => editingKey !== key)
+        );
+      }
+    };
+  }, []);
+
+  const handleSave = useMemo(() => {
+    return () => {
+      console.log("HANDLE SAVE!!!!");
+      const formObj = form.getFieldsValue();
+      console.log(formObj);
+      if (Object.keys(formObj).length === 0 && deletedIds.length === 0) {
+        toast.notify({
+          type: "info",
+          message: "There's nothing to save!",
+        });
+        return;
+      }
+
+      form
+        .validateFields()
+        .then(async () => {
+          //call a request to save
+          const resp = await fetch(`${API_ROLES}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              createAndUpdateDtos: form.getFieldsValue(),
+              deletedIds: deletedIds,
+            }),
+          });
+
+          const { content, hasErrors, errors }: ResponseDTO = await resp.json();
+          if (!hasErrors) {
+            toast.notify({
+              type: "success",
+              message: content,
+            });
+          } else {
+            toast.notify({
+              type: "error",
+              message: errors.toString(),
+            });
+          }
+        })
+        .catch(() => {
+          toast.notify({
+            type: "error",
+            message: "Please make sure data is correct!.",
+          });
+        });
+    };
+  }, [deletedIds]);
+  //-------------------------------------------END BUTTON FUNCTIONS-------------------------------------------------
+  console.log("TESTING");
+  console.log(form.getFieldsValue());
   return (
     <>
       <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar} />
@@ -205,7 +332,7 @@ const page = () => {
         <Button onClick={handleRetrieve}>Retrieve</Button>
         <Button onClick={handleRowAdd}>Row Add</Button>
         <Button onClick={handleRowDelete}>Row Delete</Button>
-        <Button onClick={() => {}}>Save</Button>
+        <Button onClick={handleSave}>Save</Button>
       </Navbar2>
       <Searchbar>
         <SearchField
@@ -225,69 +352,15 @@ const page = () => {
       </Searchbar>
       <Form form={form} component={false}>
         <Table
-          rowSelection={{
-            type: "checkbox",
-
-            onSelect: (record, selected, selectedRows) => {
-              console.log(record, selected, selectedRows);
-              form.setFieldsValue({
-                [`${record.key}_id`]: record.id,
-                [`${record.key}_name`]: record.name,
-                [`${record.key}_description`]: record.description,
-              });
-              setEditingKeys((prev) => {
-                if (!prev.includes(record.key)) {
-                  return [...prev, record.key];
-                } else {
-                  prev.splice(prev.indexOf(record.key), 1);
-                  return [...prev];
-                }
-              });
-            },
-            selectedRowKeys: editingKeys,
-            onChange: (
-              selectedRowKeys: React.Key[],
-              selectedRows: RoleInfo[],
-              info: {
-                type: RowSelectMethod;
-              }
-            ) => {
-              console.log("onchange hehe");
-              console.log(selectedRowKeys);
-              console.log(selectedRows);
-              console.log(info);
-              if (info.type === "all") {
-                if (selectedRowKeys.length === 0) {
-                  setEditingKeys([]);
-                } else {
-                  data.forEach((role) => {
-                    form.setFieldsValue({
-                      [`${role.key}_id`]: role.id,
-                      [`${role.key}_name`]: role.name,
-                      [`${role.key}_description`]: role.description,
-                    });
-                  });
-                  setEditingKeys(data.map((role) => role.key));
-                }
-              }
-            },
-          }}
-          onChange={() => {
-            console.log("onchange");
-          }}
-          components={{
-            body: {
-              cell: EditableCell,
-            },
-          }}
+          rowSelection={rowSelection}
+          components={components}
           bordered
           dataSource={data}
           columns={mergedColumns}
           rowClassName="editable-row"
-
-          // pagination={{
-          //   onChange: cancel,
-          // }}
+          pagination={{
+            pageSize: 8
+          }}
         />
       </Form>
     </>

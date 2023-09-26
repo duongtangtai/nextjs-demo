@@ -66,7 +66,6 @@ export default function Home() {
         method: "GET",
       });
       const { content, statusCode, errors }: ResponseDTO = await res.json();
-      console.log("get roles response:");
       if (statusCode !== 200) {
         toast.notify({
           type: "error",
@@ -135,16 +134,13 @@ export default function Home() {
     }
   }, [searchForm]);
 
+  
+
   const handleOpenAddModal = () => {
-    addForm.setFieldValue("id", "");
-    addForm.setFieldValue("username", "");
-    addForm.setFieldValue("email", "");
-    addForm.setFieldValue("password", "");
-    addForm.setFieldValue("roles", []);
     setIsAddModalOpen(true);
   };
 
-  const handleOpenUpdateModal = useCallback(() => {
+  const handleOpenUpdateModal = useCallback(async () => {
     if (rowRef.current === "") {
       toast.notify({
         type: "info",
@@ -154,8 +150,6 @@ export default function Home() {
     }
     setIsUpdateModalOpen(true);
     const userInfo = rows.filter((user) => user.id === rowRef.current)[0];
-    console.log("handleOpenUpdateModal");
-    console.log(userInfo);
     updateForm.setFieldValue("id", userInfo.id);
     updateForm.setFieldValue("username", userInfo.username);
     updateForm.setFieldValue("email", userInfo.email);
@@ -164,6 +158,7 @@ export default function Home() {
       "roles",
       userInfo.roles === "" ? [] : userInfo.roles.split(",")
     );
+    await updateForm.validateFields()
   }, [rowRef, rows]);
 
   const handleOpenDeleteAlert = useCallback(() => {
@@ -179,44 +174,53 @@ export default function Home() {
   }, [rowRef]);
 
   const handleAddUser = async () => {
-    const username: string = addForm.getFieldValue("username");
-    const password: string = addForm.getFieldValue("password");
-    const email: string = addForm.getFieldValue("email");
-    const roles: string[] = addForm.getFieldValue("roles");
-    if (username === "" || password === "" || email === "") {
-      return;
-    }
-    const res = await fetch(API_USERS, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username,
-        password,
-        email,
-        roles,
-      }),
-    });
-    const { content, statusCode, errors }: ResponseDTO = await res.json();
-    const userInfo: UserInfo = content as UserInfo;
-    if (statusCode === 200) {
-      toast.notify({
-        type: "success",
-        message: `Add user ${userInfo.username} successfully!`,
+    addForm
+      .validateFields()
+      .then(async () => {
+        const username: string = addForm.getFieldValue("username");
+        const password: string = addForm.getFieldValue("password");
+        const email: string = addForm.getFieldValue("email");
+        const roles: string[] = addForm.getFieldValue("roles");
+        if (username === "" || password === "" || email === "") {
+          return;
+        }
+        const res = await fetch(API_USERS, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            password,
+            email,
+            roles,
+          }),
+        });
+        const { content, statusCode, errors }: ResponseDTO = await res.json();
+        const userInfo: UserInfo = content as UserInfo;
+        if (statusCode === 200) {
+          toast.notify({
+            type: "success",
+            message: `Add user ${userInfo.username} successfully!`,
+          });
+          handleRetrieve();
+        } else {
+          toast.notify({
+            type: "warning",
+            message: `${errors.toString()}`,
+          });
+        }
+      })
+      .catch(() => {
+        toast.notify({
+          type: "error",
+          message: "Please make sure data is correct!.",
+        });
       });
-      handleRetrieve();
-    } else {
-      toast.notify({
-        type: "warning",
-        message: `${errors.toString()}`,
-      });
-    }
   };
 
   //UPDATE USER
   const handleUpdateUser = async () => {
-    console.log(updateForm.getFieldValue("id"));
     const id: string = updateForm.getFieldValue("id");
     const username: string = updateForm.getFieldValue("username");
     const password: string = updateForm.getFieldValue("password");
