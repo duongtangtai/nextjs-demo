@@ -73,6 +73,8 @@ export default function Home() {
         });
       } else {
         setRoles(content as RoleInfo[]);
+        console.log("get roles")
+        console.log(content)
       }
     };
     getRoles();
@@ -403,6 +405,7 @@ export default function Home() {
               placeholder="Choose user roles"
               onChange={() => {}}
               optionLabelProp="label"
+              virtual={false}
             >
               {roles.map((role) => (
                 <Option
@@ -521,6 +524,7 @@ export default function Home() {
               placeholder="Choose user roles"
               onChange={() => {}}
               optionLabelProp="label"
+              virtual={false}
             >
               {roles.map((role) => (
                 <Option

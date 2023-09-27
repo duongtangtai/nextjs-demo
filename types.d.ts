@@ -25,6 +25,13 @@ type RoleInfo = {
     id: string,
     name: string,
     description: string,
+    permissions: string[]
+}
+
+type PermissionInfo = {
+    id: string,
+    name: string,
+    description: string,
 }
 
 type RegisterForm = {

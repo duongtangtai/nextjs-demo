@@ -1,12 +1,28 @@
 "use client";
 
-import { Button, Navbar, Navbar2, SearchField, Searchbar } from "@/components";
+import {
+  Button,
+  Navbar,
+  Navbar2,
+  SearchField,
+  Searchbar,
+  Alert,
+} from "@/components";
 import Sidebar from "@/components/sidebar/Sidebar";
 import { ToastContext } from "@/context/toast/ToastProvider";
-import { API_ROLES } from "@/lib/utils";
-import { Form, Input, InputNumber, Table } from "antd";
+import { API_PERMISSIONS, API_ROLES } from "@/lib/utils";
+import { Form, Input, InputNumber, Select, Space, Table } from "antd";
 import { RowSelectMethod, TableRowSelection } from "antd/es/table/interface";
-import React, { ChangeEvent, useContext, useMemo, useState } from "react";
+import React, {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+const { Option } = Select;
 
 type SearchForm = {
   name: string;
@@ -18,51 +34,6 @@ const initSearchForm: SearchForm = {
   description: "",
 };
 
-const EditableCell = ({
-  editing,
-  dataIndex,
-  title,
-  inputType,
-  record,
-  index,
-  children,
-  ...restProps
-}: {
-  editing: boolean;
-  dataIndex: string;
-  title: string;
-  inputType: string;
-  record: any;
-  index: any;
-  children: any;
-}) => {
-  const inputNode = inputType === "number" ? 
-    <InputNumber onChange={(e) => {record[dataIndex] = e}}/> : 
-    <Input onChange={(e) => {record[dataIndex] = e.target.value}}/>;
-  return (
-    <td {...restProps}>
-      {editing ? (
-        <Form.Item
-          name={`${record.key}_${dataIndex}`}
-          style={{
-            margin: 0,
-          }}
-          rules={[
-            {
-              required: dataIndex !== "id",
-              message: `Please Input ${title}!`,
-            },
-          ]}
-        >
-          {inputNode}
-        </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  );
-};
-
 const page = () => {
   const [form] = Form.useForm();
   const [searchForm, setSearchForm] = useState<SearchForm>(initSearchForm);
@@ -72,6 +43,8 @@ const page = () => {
   const [editingKeys, setEditingKeys] = useState<number[]>([]);
   const isEditing = (record: any) => editingKeys.includes(record.key);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState<boolean>(false);
+  const [permissions, setPermissions] = useState<PermissionInfo[]>([]);
 
   const handleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -85,6 +58,26 @@ const page = () => {
       }));
     }
   };
+
+  useEffect(() => {
+    const gerPermissions = async () => {
+      const res = await fetch(API_PERMISSIONS, {
+        method: "GET",
+      });
+      const { content, statusCode, errors }: ResponseDTO = await res.json();
+      if (statusCode !== 200) {
+        toast.notify({
+          type: "error",
+          message: errors.toString(),
+        });
+      } else {
+        setPermissions(content as PermissionInfo[]);
+        console.log("get permissions");
+        console.log(content);
+      }
+    };
+    gerPermissions();
+  }, []);
   //-------------------------------------------START TABLE HANDLING-------------------------------------------------
   const columns = [
     {
@@ -102,7 +95,7 @@ const page = () => {
         multiple: 1,
       },
       editable: true,
-      width: "30%",
+      width: "20%",
     },
     {
       title: "Description",
@@ -112,6 +105,13 @@ const page = () => {
         multiple: 3,
       },
       editable: true,
+      width: "40%",
+    },
+    {
+      title: "Permissions",
+      dataIndex: "permissions",
+      editable: true,
+      // width: "50%",
     },
   ];
 
@@ -123,7 +123,7 @@ const page = () => {
       ...col,
       onCell: (record: any) => ({
         record,
-        inputType: col.dataIndex === "age" ? "number" : "text",
+        inputType: col.dataIndex === "permissions" ? "multiple-select" : "text",
         dataIndex: col.dataIndex,
         title: col.title,
         editing: isEditing(record),
@@ -137,11 +137,13 @@ const page = () => {
     selectedRows: RoleInfo[]
   ) => {
     console.log("ON-SELECT");
+    console.log(record);
     if (selected) {
       form.setFieldsValue({
         [`${record.key}_id`]: record.id,
         [`${record.key}_name`]: record.name,
         [`${record.key}_description`]: record.description,
+        [`${record.key}_permissions`]: record.permissions,
       });
       setEditingKeys((prev) => [...prev, record.key]);
     } else {
@@ -160,7 +162,8 @@ const page = () => {
     }
   ) => {
     if (info.type === "all") {
-      if (selectedRowKeys.length === 0) { //deselect all
+      if (selectedRowKeys.length === 0) {
+        //deselect all
         setEditingKeys([]);
       } else {
         data.forEach((role) => {
@@ -168,6 +171,7 @@ const page = () => {
             [`${role.key}_id`]: role.id,
             [`${role.key}_name`]: role.name,
             [`${role.key}_description`]: role.description,
+            [`${role.key}_permissions`]: role.permissions,
           });
         });
         setEditingKeys(data.map((role) => role.key));
@@ -180,6 +184,117 @@ const page = () => {
     selectedRowKeys: editingKeys,
     onSelect: handleRowOnSelect,
     onChange: handleRowOnChange,
+  };
+
+  const EditableCell = ({
+    editing,
+    dataIndex,
+    title,
+    inputType,
+    record,
+    index,
+    children,
+    ...restProps
+  }: {
+    editing: boolean;
+    dataIndex: string;
+    title: string;
+    inputType: string;
+    record: any;
+    index: any;
+    children: any;
+  }) => {
+    let inputNode;
+    switch (dataIndex) {
+      case "permissions":
+        inputNode = (
+          <Select
+            mode="multiple"
+            style={{
+              width: "100%",
+            }}
+            placeholder="Choose permissions"
+            onChange={(arr) => {
+              console.log("Role On Change: ");
+              console.log(arr);
+              console.log("before: ");
+              console.log(record[dataIndex]);
+              record[dataIndex] = arr;
+              console.log("after: ");
+              console.log(record[dataIndex]);
+            }}
+            optionLabelProp="label"
+            virtual={false}
+            defaultValue={record[dataIndex]}
+          >
+            {permissions.map((permission) => (
+              <Option
+                key={permission.name}
+                value={permission.name}
+                label={permission.description}
+              >
+                <Space>
+                  <span
+                    role="img"
+                    aria-label={permission.description}
+                    style={{ fontSize: "0.5rem" }}
+                  >
+                    {permission.name}
+                  </span>
+                  {permission.description}
+                </Space>
+              </Option>
+            ))}
+          </Select>
+        )
+        return (
+          <td {...restProps}>
+            {editing ? (
+              <Form.Item
+                name={`${record.key}_${dataIndex}`}
+                style={{
+                  margin: 0,
+                }}
+              >
+                {inputNode}
+              </Form.Item>
+            ) : (
+              inputNode
+            )}
+          </td>
+        );
+        default:
+          inputNode = (
+            <Input
+              onChange={(e) => {
+                record[dataIndex] = e.target.value;
+              }}
+            />
+          );
+          return (
+            <td {...restProps}>
+              {editing ? (
+                <Form.Item
+                  name={`${record.key}_${dataIndex}`}
+                  style={{
+                    margin: 0,
+                  }}
+                  rules={[
+                    {
+                      required: dataIndex !== "id",
+                      message: `Please Input ${title}!`,
+                    },
+                  ]}
+                >
+                  {inputNode}
+                </Form.Item>
+              ) : (
+                children
+              )}
+            </td>
+          );
+
+    }
   };
 
   const components = {
@@ -227,6 +342,7 @@ const page = () => {
         id: "",
         name: "",
         description: "",
+        permissions: [],
       };
 
       setData([...data, newRole]);
@@ -234,43 +350,50 @@ const page = () => {
         [`${nextKey}_id`]: newRole.id,
         [`${nextKey}_name`]: newRole.name,
         [`${nextKey}_description`]: newRole.description,
+        [`${nextKey}_permissions`]: newRole.permissions,
       });
       setEditingKeys((prev) => [...prev, nextKey]);
     };
   }, [data, form]);
 
-  const handleRowDelete = useMemo(() => {
-    return () => {
-      const formObj = form.getFieldsValue();
-      if (Object.keys(formObj).length === 0) {
-        toast.notify({
-          type: "info",
-          message: "Please select a row!",
-        });
-        return;
-      }
-      /*
+  const handleOpenDeleteAlert = () => {
+    const formObj = form.getFieldsValue();
+    if (Object.keys(formObj).length === 0) {
+      toast.notify({
+        type: "info",
+        message: "Please select a row!",
+      });
+      return;
+    }
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleCloseDeleteAlert = () => {
+    setIsDeleteAlertOpen(false);
+  };
+
+  const handleRowDelete = () => {
+    /*
       loop through this obj => if ?_id => not undefined => add id to an array => when we save, send this array along with them
       then delete from datasource and editing keys
       */
-      for (const name in formObj) {
-        if (
-          name.indexOf("id") > 0 &&
-          formObj[name] !== undefined &&
-          formObj[name] !== ""
-        ) {
-          //this id needs to be stored
-          setDeletedIds((prev) => [...prev, formObj[name]]);
-        }
-        const key = parseInt(name.split("_")[0]);
-        //delete from datasource and editing keys
-        setData((prev) => prev.filter((role) => role.key !== key));
-        setEditingKeys((prev) =>
-          prev.filter((editingKey) => editingKey !== key)
-        );
+    const formObj = form.getFieldsValue();
+    for (const name in formObj) {
+      if (
+        name.indexOf("id") > 0 &&
+        formObj[name] !== undefined &&
+        formObj[name] !== ""
+      ) {
+        //this id needs to be stored
+        setDeletedIds((prev) => [...prev, formObj[name]]);
       }
-    };
-  }, []);
+      const key = parseInt(name.split("_")[0]);
+      //delete from datasource and editing keys
+      setData((prev) => prev.filter((role) => role.key !== key));
+      setEditingKeys((prev) => prev.filter((editingKey) => editingKey !== key));
+    }
+    setIsDeleteAlertOpen(false);
+  };
 
   const handleSave = useMemo(() => {
     return () => {
@@ -306,6 +429,7 @@ const page = () => {
               type: "success",
               message: content,
             });
+            handleRetrieve();
           } else {
             toast.notify({
               type: "error",
@@ -322,8 +446,8 @@ const page = () => {
     };
   }, [deletedIds]);
   //-------------------------------------------END BUTTON FUNCTIONS-------------------------------------------------
-  console.log("TESTING");
-  console.log(form.getFieldsValue());
+  console.log("RENDERING-----------------");
+  console.log(data);
   return (
     <>
       <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar} />
@@ -331,7 +455,7 @@ const page = () => {
       <Navbar2 title={"Role Management"} handleSidebar={handleSidebar}>
         <Button onClick={handleRetrieve}>Retrieve</Button>
         <Button onClick={handleRowAdd}>Row Add</Button>
-        <Button onClick={handleRowDelete}>Row Delete</Button>
+        <Button onClick={handleOpenDeleteAlert}>Row Delete</Button>
         <Button onClick={handleSave}>Save</Button>
       </Navbar2>
       <Searchbar>
@@ -359,10 +483,17 @@ const page = () => {
           columns={mergedColumns}
           rowClassName="editable-row"
           pagination={{
-            pageSize: 8
+            pageSize: 8,
           }}
         />
       </Form>
+      {isDeleteAlertOpen && (
+        <Alert
+          message={`Do you want to delete these roles?`}
+          handleConfirm={handleRowDelete}
+          handleClose={handleCloseDeleteAlert}
+        />
+      )}
     </>
   );
 };

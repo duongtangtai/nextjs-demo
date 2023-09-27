@@ -5,3 +5,4 @@ export {default as Searchbar} from "./searchbar/Searchbar";
 export {default as SearchField} from "./search-field/SearchField";
 export {default as Button} from "./button/Button";
 export {default as Table} from "./table/Table";
+export {default as Alert} from "./alert/Alert";

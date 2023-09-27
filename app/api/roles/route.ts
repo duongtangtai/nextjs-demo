@@ -49,8 +49,10 @@ export async function POST(request: NextRequest) {
             }
         }
         //separate createDtos and updateDtos
-        const createRoleDtos : Omit<RoleInfo, "id" | "key" >[] = [];
-        const updateRoleDtos : Omit<RoleInfo, "key">[] = [];
+        // const createRoleDtos : Omit<RoleInfo, "id" | "key" >[] = [];
+        // const updateRoleDtos : Omit<RoleInfo, "key">[] = [];
+        const createRoleDtos : any = [];
+        const updateRoleDtos : any = [];
         dtos.forEach(dto => dto.id === "" ? createRoleDtos.push({
             name: dto.name,
             description: dto.description
