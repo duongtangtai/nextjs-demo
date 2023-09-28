@@ -11,7 +11,7 @@ import {
 import Sidebar from "@/components/sidebar/Sidebar";
 import { ToastContext } from "@/context/toast/ToastProvider";
 import { API_PERMISSIONS, API_ROLES } from "@/lib/utils";
-import { Form, Input, InputNumber, Select, Space, Table } from "antd";
+import { Form, Input, InputNumber, Select, Space, Table, Tag } from "antd";
 import { RowSelectMethod, TableRowSelection } from "antd/es/table/interface";
 import React, {
   ChangeEvent,
@@ -72,8 +72,6 @@ const page = () => {
         });
       } else {
         setPermissions(content as PermissionInfo[]);
-        console.log("get permissions");
-        console.log(content);
       }
     };
     gerPermissions();
@@ -109,7 +107,7 @@ const page = () => {
     },
     {
       title: "Permissions",
-      dataIndex: "permissions",
+      dataIndex: "permissionNames",
       editable: true,
       // width: "50%",
     },
@@ -123,7 +121,8 @@ const page = () => {
       ...col,
       onCell: (record: any) => ({
         record,
-        inputType: col.dataIndex === "permissions" ? "multiple-select" : "text",
+        inputType:
+          col.dataIndex === "permissionNames" ? "multiple-select" : "text",
         dataIndex: col.dataIndex,
         title: col.title,
         editing: isEditing(record),
@@ -136,14 +135,12 @@ const page = () => {
     selected: boolean,
     selectedRows: RoleInfo[]
   ) => {
-    console.log("ON-SELECT");
-    console.log(record);
     if (selected) {
       form.setFieldsValue({
         [`${record.key}_id`]: record.id,
         [`${record.key}_name`]: record.name,
         [`${record.key}_description`]: record.description,
-        [`${record.key}_permissions`]: record.permissions,
+        [`${record.key}_permissionNames`]: record.permissionNames,
       });
       setEditingKeys((prev) => [...prev, record.key]);
     } else {
@@ -171,7 +168,7 @@ const page = () => {
             [`${role.key}_id`]: role.id,
             [`${role.key}_name`]: role.name,
             [`${role.key}_description`]: role.description,
-            [`${role.key}_permissions`]: role.permissions,
+            [`${role.key}_permissionNames`]: role.permissionNames,
           });
         });
         setEditingKeys(data.map((role) => role.key));
@@ -184,6 +181,28 @@ const page = () => {
     selectedRowKeys: editingKeys,
     onSelect: handleRowOnSelect,
     onChange: handleRowOnChange,
+  };
+
+  const getTagPermissionColor = (name: string) => {
+    const type = name.substring(0, name.indexOf("_"));
+    let color: string;
+    switch (type) {
+      case "READ":
+        color = "green";
+        break;
+      case "CREATE":
+        color = "blue";
+        break;
+      case "UPDATE":
+        color = "purple";
+        break;
+      case "DELETE":
+        color = "error";
+        break;
+      default:
+        color = "default";
+    }
+    return color;
   };
 
   const EditableCell = ({
@@ -206,8 +225,8 @@ const page = () => {
   }) => {
     let inputNode;
     switch (dataIndex) {
-      case "permissions":
-        inputNode = (
+      case "permissionNames":
+        inputNode = editing ? (
           <Select
             mode="multiple"
             style={{
@@ -215,17 +234,26 @@ const page = () => {
             }}
             placeholder="Choose permissions"
             onChange={(arr) => {
-              console.log("Role On Change: ");
-              console.log(arr);
-              console.log("before: ");
-              console.log(record[dataIndex]);
               record[dataIndex] = arr;
-              console.log("after: ");
-              console.log(record[dataIndex]);
             }}
             optionLabelProp="label"
             virtual={false}
-            defaultValue={record[dataIndex]}
+            onDeselect={() => console.log("on deselect")}
+            onSelect={() => console.log("on select")}
+            tagRender={(props) => {
+              return (
+                <Tag
+                  closable={true}
+                  color={getTagPermissionColor(props.value)}
+                  onClose={props.onClose}
+                  style={{
+                    margin: "4px",
+                  }}
+                >
+                  {props.value}
+                </Tag>
+              );
+            }}
           >
             {permissions.map((permission) => (
               <Option
@@ -233,20 +261,38 @@ const page = () => {
                 value={permission.name}
                 label={permission.description}
               >
-                <Space>
-                  <span
-                    role="img"
-                    aria-label={permission.description}
-                    style={{ fontSize: "0.5rem" }}
-                  >
-                    {permission.name}
-                  </span>
-                  {permission.description}
-                </Space>
+                <Tag
+                  closable={false}
+                  color={getTagPermissionColor(permission.name)}
+                  style={{
+                    width: "100%",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {permission.name}
+                </Tag>
               </Option>
             ))}
           </Select>
-        )
+        ) : (
+          <>
+            {record.permissionNames.map((name: string) => {
+              return (
+                <Space key={name} style={{ fontSize: "0.5rem" }}>
+                  <Tag
+                    closable={false}
+                    color={getTagPermissionColor(name)}
+                    style={{
+                      margin: "4px",
+                    }}
+                  >
+                    {name}
+                  </Tag>
+                </Space>
+              );
+            })}
+          </>
+        );
         return (
           <td {...restProps}>
             {editing ? (
@@ -254,7 +300,9 @@ const page = () => {
                 name={`${record.key}_${dataIndex}`}
                 style={{
                   margin: 0,
+                  padding: 0,
                 }}
+                initialValue={record[dataIndex]}
               >
                 {inputNode}
               </Form.Item>
@@ -263,37 +311,37 @@ const page = () => {
             )}
           </td>
         );
-        default:
-          inputNode = (
-            <Input
-              onChange={(e) => {
-                record[dataIndex] = e.target.value;
-              }}
-            />
-          );
-          return (
-            <td {...restProps}>
-              {editing ? (
-                <Form.Item
-                  name={`${record.key}_${dataIndex}`}
-                  style={{
-                    margin: 0,
-                  }}
-                  rules={[
-                    {
-                      required: dataIndex !== "id",
-                      message: `Please Input ${title}!`,
-                    },
-                  ]}
-                >
-                  {inputNode}
-                </Form.Item>
-              ) : (
-                children
-              )}
-            </td>
-          );
-
+      default:
+        inputNode = (
+          <Input
+            onChange={(e) => {
+              record[dataIndex] = e.target.value;
+            }}
+          />
+        );
+        return (
+          <td {...restProps}>
+            {editing ? (
+              <Form.Item
+                name={`${record.key}_${dataIndex}`}
+                style={{
+                  margin: 0,
+                  padding: 0,
+                }}
+                rules={[
+                  {
+                    required: dataIndex !== "id",
+                    message: `Please Input ${title}!`,
+                  },
+                ]}
+              >
+                {inputNode}
+              </Form.Item>
+            ) : (
+              children
+            )}
+          </td>
+        );
     }
   };
 
@@ -317,7 +365,10 @@ const page = () => {
       );
       const { content, hasErrors, errors }: ResponseDTO = await response.json();
       if (hasErrors) {
-        alert("error happens: " + errors.toString());
+        toast.notify({
+          type: "warning",
+          message: errors.toString(),
+        });
       } else {
         const roles = content as RoleInfo[];
         roles.forEach((role, index) => {
@@ -342,7 +393,7 @@ const page = () => {
         id: "",
         name: "",
         description: "",
-        permissions: [],
+        permissionNames: [],
       };
 
       setData([...data, newRole]);
@@ -350,7 +401,7 @@ const page = () => {
         [`${nextKey}_id`]: newRole.id,
         [`${nextKey}_name`]: newRole.name,
         [`${nextKey}_description`]: newRole.description,
-        [`${nextKey}_permissions`]: newRole.permissions,
+        [`${nextKey}_permissionNames`]: newRole.permissionNames,
       });
       setEditingKeys((prev) => [...prev, nextKey]);
     };
@@ -400,6 +451,8 @@ const page = () => {
       console.log("HANDLE SAVE!!!!");
       const formObj = form.getFieldsValue();
       console.log(formObj);
+      console.log("deletedIds");
+      console.log(deletedIds);
       if (Object.keys(formObj).length === 0 && deletedIds.length === 0) {
         toast.notify({
           type: "info",
@@ -485,6 +538,9 @@ const page = () => {
           pagination={{
             pageSize: 8,
           }}
+          // onHeaderRow={() => {
+
+          // }}
         />
       </Form>
       {isDeleteAlertOpen && (

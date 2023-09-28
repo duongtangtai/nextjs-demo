@@ -129,7 +129,10 @@ export default function Home() {
     );
     const { content, hasErrors, errors }: ResponseDTO = await response.json();
     if (hasErrors) {
-      alert("error happens: " + errors.toString());
+      toast.notify({
+        type: "warning",
+        message: errors.toString()
+      })
     } else {
       const users = content as UserInfo[];
       setRows([...users]);

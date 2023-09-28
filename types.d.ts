@@ -25,7 +25,7 @@ type RoleInfo = {
     id: string,
     name: string,
     description: string,
-    permissions: string[]
+    permissionNames: string[]
 }
 
 type PermissionInfo = {

@@ -28,6 +28,7 @@ export const AlertContainer = styled.div`
     left: 0;
     display: flex;
     animation: ${fadeIn} linear 0.3s;
+    z-index: 10;
 `
 
 export const AlertOverlay = styled.div`

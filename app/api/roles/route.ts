@@ -51,11 +51,12 @@ export async function POST(request: NextRequest) {
         //separate createDtos and updateDtos
         // const createRoleDtos : Omit<RoleInfo, "id" | "key" >[] = [];
         // const updateRoleDtos : Omit<RoleInfo, "key">[] = [];
-        const createRoleDtos : any = [];
-        const updateRoleDtos : any = [];
+        const createRoleDtos : Omit<RoleInfo, "id" | "key">[] = [];
+        const updateRoleDtos : Omit<RoleInfo, "key">[] = [];
         dtos.forEach(dto => dto.id === "" ? createRoleDtos.push({
             name: dto.name,
-            description: dto.description
+            description: dto.description,
+            permissionNames: dto.permissionNames
         }) : updateRoleDtos.push(dto))
 
         console.log("createDtos")
