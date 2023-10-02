@@ -1,10 +1,7 @@
-// "use client";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import WrapperProvider from "@/context/WrapperProvider";
 import { headers } from "next/headers";
-// import { usePathname } from "next/navigation";
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -30,7 +27,9 @@ export default function RootLayout({
             : {}
         }
       >
-        <WrapperProvider>{children}</WrapperProvider>
+        <WrapperProvider>
+          {children}
+        </WrapperProvider>
       </body>
     </html>
   );

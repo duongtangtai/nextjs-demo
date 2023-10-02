@@ -1,5 +1,3 @@
-"use client"
-
 import React, {memo, useEffect, useState } from "react";
 import {
   NavbarContainer,
@@ -7,20 +5,21 @@ import {
   NavbarInfoUser,
   NavbarInfoUserDetail,
 } from "./styled";
-import Logout from "../logout/Logout";
 import { getCookie } from "cookies-next";
+import ControlButton from "../control-button/ControlButton";
+
 
 const Navbar = () => {
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    id: "",
+  console.log("render navbar")
+  let userInfo : UserInfo = {
     username: "",
     email: "",
-  });
-  useEffect(() => {
-    const userCookie : UserInfo = JSON.parse(getCookie("userInfo") as string)
-    setUserInfo(userCookie)
-  }, []);
-  console.log("render navbar")
+    id: "",
+    roles: "",
+  }
+  if (typeof window !== "undefined") {
+    userInfo = JSON.parse(getCookie("userInfo") as string);
+  }
 
   return (
     <NavbarContainer>
@@ -34,7 +33,7 @@ const Navbar = () => {
           <span className="key">EMAIL</span>
           <span className="value">{userInfo.email}</span>
         </NavbarInfoUserDetail>
-        <Logout />
+        <ControlButton />
       </NavbarInfoUser>
     </NavbarContainer>
   );

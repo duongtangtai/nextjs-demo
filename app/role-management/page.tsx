@@ -11,11 +11,11 @@ import {
 import Sidebar from "@/components/sidebar/Sidebar";
 import { ToastContext } from "@/context/toast/ToastProvider";
 import { API_PERMISSIONS, API_ROLES } from "@/lib/utils";
-import { Form, Input, InputNumber, Select, Space, Table, Tag } from "antd";
+import { Form, Input, Select, Space, Table, Tag } from "antd";
 import { RowSelectMethod, TableRowSelection } from "antd/es/table/interface";
+import { getCookie } from "cookies-next";
 import React, {
   ChangeEvent,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -34,7 +34,13 @@ const initSearchForm: SearchForm = {
   description: "",
 };
 
-const page = () => {
+export async function getServerSideProps() {
+  console.log("HEHEHEHEHEHEHEgetServerSideProps")
+  return { props: { bar: 100 } };
+}
+
+export default function Page () {
+  //user infomation
   const [form] = Form.useForm();
   const [searchForm, setSearchForm] = useState<SearchForm>(initSearchForm);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
@@ -260,6 +266,7 @@ const page = () => {
                 key={permission.name}
                 value={permission.name}
                 label={permission.description}
+                
               >
                 <Tag
                   closable={false}
@@ -503,7 +510,7 @@ const page = () => {
   console.log(data);
   return (
     <>
-      <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar}/>
       <Navbar />
       <Navbar2 title={"Role Management"} handleSidebar={handleSidebar}>
         <Button onClick={handleRetrieve}>Retrieve</Button>
@@ -554,4 +561,4 @@ const page = () => {
   );
 };
 
-export default page;
+// export default page;

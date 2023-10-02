@@ -22,6 +22,7 @@ import Sidebar from "@/components/sidebar/Sidebar";
 import { ToastContext } from "@/context/toast/ToastProvider";
 import { Input, Modal, Form, Select, Space } from "antd";
 import Alert from "@/components/alert/Alert";
+import { getCookie } from "cookies-next";
 
 const { Option } = Select;
 
@@ -287,7 +288,7 @@ export default function Home() {
 
   return (
     <>
-      <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} handleSidebar={handleSidebar}/>
       <Navbar />
       <Navbar2 title={"User Management"} handleSidebar={handleSidebar}>
         <Button onClick={handleRetrieve}>Retrieve</Button>

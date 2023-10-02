@@ -43,9 +43,6 @@ export async function POST(request: NextRequest) {
         if (response.status === 401) {
             NextResponse.redirect("/login")
         }
-        if (response.status === 403) {
-            NextResponse.redirect
-        }
         const responseDto: ResponseDTO = await response.json()
         if (responseDto.hasErrors) {
             return response = new Response(JSON.stringify(responseDto), { status: responseDto.statusCode })
