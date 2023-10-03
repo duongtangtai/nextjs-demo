@@ -51,6 +51,7 @@ export default function Page () {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState<boolean>(false);
   const [permissions, setPermissions] = useState<PermissionInfo[]>([]);
+  const [isTableLoading, setIsTableLoading] = useState<boolean>(false);
 
   const handleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -366,6 +367,7 @@ export default function Page () {
       //clear everything before retrieving
       setEditingKeys([]);
       setDeletedIds([]);
+      setIsTableLoading(true);
       //call request
       const response = await fetch(
         `${API_ROLES}?name=${searchForm.name}&description=${searchForm.description}`
@@ -382,6 +384,7 @@ export default function Page () {
           role.key = index;
         });
         setData([...roles]);
+        setIsTableLoading(false);
       }
     };
   }, [searchForm]);
@@ -545,6 +548,7 @@ export default function Page () {
           pagination={{
             pageSize: 8,
           }}
+          loading={isTableLoading}
           // onHeaderRow={() => {
 
           // }}

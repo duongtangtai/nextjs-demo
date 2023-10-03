@@ -29,6 +29,7 @@ export const SidebarTitle = styled.span`
     font-weight: bold;
     text-align: center;
     padding: 5px 6px;
+    flex: 1;
 `
 
 export const SidebarMenu = styled.button`

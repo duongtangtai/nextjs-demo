@@ -34,6 +34,16 @@ type PermissionInfo = {
     description: string,
 }
 
+type VesselInfo = {
+    vslCd: string,
+    vslEngNm: string,
+    callSgnNo: string,
+    crrCr: string,
+    fdrDivCd: string,
+    lloydNo: string,
+    netRgstTongWgt: number,
+}
+
 type RegisterForm = {
     email: string,
     username: string,

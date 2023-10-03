@@ -7,6 +7,7 @@ export const API_USERS = `${API_ROOT}/api/users`
 export const API_USERS_CHANGE_PASSWORD = `${API_ROOT}/api/users/change-password`
 export const API_ROLES = `${API_ROOT}/api/roles`
 export const API_PERMISSIONS = `${API_ROOT}/api/permissions`
+export const API_VESSEL_MANAGEMENT = `${API_ROOT}/api/vessel-management`
 
 const BE_ROOT = "http://localhost:3001";
 export const BE_AUTH_LOGIN = `${BE_ROOT}/auth/login`
@@ -17,6 +18,7 @@ export const BE_USER_ADD_ROLES = `${BE_USER}/add-roles`
 export const BE_USER_CHANGE_PASSWORD = `${BE_USER}/change-password`
 export const BE_ROLE = `${BE_ROOT}/roles`
 export const BE_PERMISSIONS = `${BE_ROOT}/permissions`
+export const BE_VESSEL_MANAGEMENT = `${BE_ROOT}/vessel-management`
 
 export const ROLE_ADMIN = "ADM"
 export const ROLE_MANAGER = "MNG"

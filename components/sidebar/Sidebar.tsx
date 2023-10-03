@@ -19,7 +19,7 @@ type Props = {
 
 const Sidebar = ({ isOpen, handleSidebar }: Props) => {
   //user infomation
-  const userInfo: UserInfo = JSON.parse(getCookie("userInfo") as string);
+  let userInfo: UserInfo = JSON.parse(getCookie("userInfo") as string);
   console.log("render sidebar");
   let menuArr;
   if (userInfo.roles.includes(ROLE_ADMIN)) {
