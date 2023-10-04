@@ -22,7 +22,6 @@ import Sidebar from "@/components/sidebar/Sidebar";
 import { ToastContext } from "@/context/toast/ToastProvider";
 import { Input, Modal, Form, Select, Space } from "antd";
 import Alert from "@/components/alert/Alert";
-import { getCookie } from "cookies-next";
 
 const { Option } = Select;
 

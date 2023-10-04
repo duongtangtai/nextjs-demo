@@ -1,4 +1,4 @@
-import React, {memo, useEffect, useState } from "react";
+import React, { memo, useContext, useEffect, useState } from "react";
 import {
   NavbarContainer,
   NavbarInfoProject,
@@ -7,20 +7,44 @@ import {
 } from "./styled";
 import { getCookie } from "cookies-next";
 import ControlButton from "../control-button/ControlButton";
-
+import io from 'socket.io-client'
+import { ToastContext } from "@/context/toast/ToastProvider";
 
 const Navbar = () => {
-  console.log("render navbar")
-  let userInfo : UserInfo = {
+  console.log("render navbar");
+  const toast = useContext(ToastContext)
+  let userInfo: UserInfo = {
     username: "",
     email: "",
     id: "",
     roles: "",
-  }
+  };
   if (typeof window !== "undefined") {
     userInfo = JSON.parse(getCookie("userInfo") as string);
   }
+  useEffect(() => {
+    const socket = io("http://localhost:3001");
+    socket.on("connect", () => {
+      console.log("WebSocket connected");
+    });
 
+    socket.on("disconnect", () => {
+      console.log("WebSocket disconnected");
+    });
+
+    socket.on("onNotification", (data) => {
+      console.log("onNotification");
+      console.log(data);
+      toast.notify({
+        type: "info",
+        message: data,
+      });
+    });
+    return () => {
+      console.log("clear socket")
+      socket.disconnect();
+    }
+  }, []);
   return (
     <NavbarContainer>
       <NavbarInfoProject>OPUS CONTAINER</NavbarInfoProject>
@@ -39,4 +63,4 @@ const Navbar = () => {
   );
 };
 
-export default memo(Navbar)
+export default memo(Navbar);

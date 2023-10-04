@@ -7,10 +7,8 @@ export async function GET(request: NextRequest) {
     try {
         console.log("FE received:")
         const { searchParams } = new URL(request.url);
-        const vslCd = searchParams.get("vslCd") ?? "";
-        console.log("vslCd: " + vslCd)
         response = await requestHandler({
-            path: `${BE_VESSEL_MANAGEMENT}?vslCd=${vslCd}`,
+            path: `${BE_VESSEL_MANAGEMENT}?${searchParams.toString()}`,
             method: "GET",
             isTokenRequired: true,
         })

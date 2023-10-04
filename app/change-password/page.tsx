@@ -4,33 +4,11 @@ import { API_USERS_CHANGE_PASSWORD } from "@/lib/utils";
 import { Button, Form, Input } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { getCookie } from "cookies-next";
-import { useContext, useEffect } from "react";
-import io from 'socket.io-client'
+import { useContext } from "react";
 
 const Page = () => {
   const [form] = useForm();
   const toast = useContext(ToastContext)
-
-  useEffect(() => {
-    console.log("useEffect.......")
-    const socket = io('http://localhost:3001')
-    socket.on('connect', () => {
-      console.log('WebSocket connected');
-    });
-
-    socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-    });
-
-    socket.on('onNotification', (data) => {
-      console.log("onNotification");
-      console.log(data)
-      toast.notify({
-        type: "info",
-        message: data
-      })
-    });
-  }, [])
 
   const handleSubmit = async () => {
     form

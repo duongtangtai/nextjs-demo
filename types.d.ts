@@ -35,6 +35,7 @@ type PermissionInfo = {
 }
 
 type VesselInfo = {
+    key: number;
     vslCd: string,
     vslEngNm: string,
     callSgnNo: string,

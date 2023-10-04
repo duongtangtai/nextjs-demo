@@ -13,7 +13,6 @@ import { ToastContext } from "@/context/toast/ToastProvider";
 import { API_PERMISSIONS, API_ROLES } from "@/lib/utils";
 import { Form, Input, Select, Space, Table, Tag } from "antd";
 import { RowSelectMethod, TableRowSelection } from "antd/es/table/interface";
-import { getCookie } from "cookies-next";
 import React, {
   ChangeEvent,
   useContext,
